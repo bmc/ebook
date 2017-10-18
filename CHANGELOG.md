@@ -1,5 +1,6 @@
 **Version 0.3.0**
 
+* Added support for generating a bibiography (references) section.
 * Reworked how the pandoc filter handles token substitution.
 * Moved metadata to a Pandoc-style metadata file.
 * Added more substitution tokens.

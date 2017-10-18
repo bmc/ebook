@@ -1,12 +1,5 @@
 # Chapter 1
 
-* Author: _%author%_
-* Title: %title%
-* Subtitle: %subtitle%
-* Copyright: © %copyright-year% %copyright-owner%
-* Publisher: %publisher%
-* Language: %language%
-
 Lorem ipsum dolor sit amet diam vestibulum dolorem velit nam parturient orci.
 Dictum mollis et. Odio ut odio ullamcorper diam ac. Risus a wisi nec wisi
 aliquet. Suscipit platea et massa in mattis. Id ac risus. Necessitatibus

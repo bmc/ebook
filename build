@@ -15,7 +15,9 @@ from lib import *
 # Constants
 # ---------------------------------------------------------------------------
 
-BOOK_SRC = 'book'
+BOOK_SRC_DIR = 'book'
+TMP_DIR  = 'tmp'
+FILES_DIR = 'files'
 
 BUILD_FILE = 'build'
 
@@ -23,49 +25,52 @@ BUILD_FILE = 'build'
 
 OUTPUT_BASENAME    = 'book'
 
-EPUB_METADATA      = "tmp/epub-metadata.xml"
-LATEX_COVER_PAGE   = 'tmp/latex-title.latex'
+EPUB_METADATA      = f'{TMP_DIR}/epub-metadata.xml'
+LATEX_COVER_PAGE   = f'{TMP_DIR}/latex-title.latex'
 
-OUTPUT_HTML        = f"{OUTPUT_BASENAME}.html"
-OUTPUT_PDF         = f"{OUTPUT_BASENAME}.pdf"
-OUTPUT_EPUB        = f"{OUTPUT_BASENAME}.epub"
-OUTPUT_DOCX        = f"{OUTPUT_BASENAME}.docx"
-OUTPUT_LATEX       = f"{OUTPUT_BASENAME}.latex"
-OUTPUT_JSON        = f"{OUTPUT_BASENAME}.json"
+OUTPUT_HTML        = f'{OUTPUT_BASENAME}.html'
+OUTPUT_PDF         = f'{OUTPUT_BASENAME}.pdf'
+OUTPUT_EPUB        = f'{OUTPUT_BASENAME}.epub'
+OUTPUT_DOCX        = f'{OUTPUT_BASENAME}.docx'
+OUTPUT_LATEX       = f'{OUTPUT_BASENAME}.latex'
+OUTPUT_JSON        = f'{OUTPUT_BASENAME}.json'
+
+COMBINED_METADATA  = f'{TMP_DIR}/metadata.yaml'
 
 # Input files
 
-EPUB_METADATA_TEMPLATE = 'files/epub-metadata.xml'
+EPUB_METADATA_TEMPLATE = f'{FILES_DIR}/epub-metadata.xml'
 
-REFERENCES         = f"{BOOK_SRC}/references.md"
-METADATA_YAML      = f"{BOOK_SRC}/metadata.yaml"
+REFERENCES_YAML    = f'{BOOK_SRC_DIR}/references.yaml'
+REFERENCES         = f'{FILES_DIR}/references.md'
+METADATA_YAML      = f'{BOOK_SRC_DIR}/metadata.yaml'
 
 metadata           = load_metadata(METADATA_YAML)
-uses_references    = has_references(metadata, REFERENCES)
+uses_references    = os.path.exists(REFERENCES_YAML)
 
-COVER_IMAGE        = f"{BOOK_SRC}/cover.png"
-CHAPTERS           = glob(f'{BOOK_SRC}/chapter-*.md')
-COPYRIGHT          = f'{BOOK_SRC}/copyright.md'
-LATEX_HEADER       = 'files/header.latex'
+COVER_IMAGE        = f'{BOOK_SRC_DIR}/cover.png'
+CHAPTERS           = glob(f'{BOOK_SRC_DIR}/chapter-*.md')
+COPYRIGHT          = f'{BOOK_SRC_DIR}/copyright.md'
+LATEX_HEADER       = f'{FILES_DIR}/header.latex'
 
 BOOK_FILE_LIST    = (
-    [METADATA_YAML, COPYRIGHT] +
-    maybe_file(f"{BOOK_SRC}/dedication.md") +
-    maybe_file(f"{BOOK_SRC}/prologue.md") +
+    [COMBINED_METADATA, COPYRIGHT] +
+    maybe_file(f'{BOOK_SRC_DIR}/dedication.md') +
+    maybe_file(f'{BOOK_SRC_DIR}/prologue.md') +
     CHAPTERS +
-    maybe_file(f"{BOOK_SRC}/epilogue.md") +
-    maybe_file(f"{BOOK_SRC}/acknowledgments.md") +
+    maybe_file(f'{BOOK_SRC_DIR}/epilogue.md') +
+    maybe_file(f'{BOOK_SRC_DIR}/acknowledgments.md') +
     ([REFERENCES] if uses_references else [])
 )
 
-HTML_CSS           = 'files/html.css'
-EPUB_CSS           = 'files/epub.css'
-LATEX_TEMPLATE     = 'files/latex.template'
-REF_DOCX           = 'files/custom-reference.docx'
-PANDOC_FILTER      = "scripts/pandoc-filter.py"
+HTML_CSS           = f'{FILES_DIR}/html.css'
+EPUB_CSS           = f'{FILES_DIR}/epub.css'
+LATEX_TEMPLATE     = f'{FILES_DIR}/latex.template'
+REF_DOCX           = f'{FILES_DIR}/custom-reference.docx'
+PANDOC_FILTER      = 'scripts/pandoc-filter.py'
 
 # Lists of dependencies, for ease of reference.
-DEPS       = BOOK_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, METADATA_YAML]
+DEPS       = BOOK_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, COMBINED_METADATA]
 EPUB_DEPS  = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
 HTML_DEPS  = DEPS + [HTML_CSS]
 LATEX_DEPS = DEPS + [COVER_IMAGE, LATEX_COVER_PAGE, LATEX_TEMPLATE, LATEX_HEADER]
@@ -113,7 +118,7 @@ def task_clobber():
         rm_f(glob('*.bak'))
         rm_rf('__pycache__')
         rm_rf('lib/__pycache__')
-        rm_rf(f'{BOOK_SRC}__pycache__')
+        rm_rf(f'{BOOK_SRC_DIR}__pycache__')
         rm_rf('tmp')
 
     return {
@@ -238,6 +243,31 @@ def task_latex_title():
         'clean':    True
     }
 
+def task_combined_metadata():
+    '''
+    Generate the consolidated metadata file.
+    '''
+    def run(targets):
+        with open(targets[0], 'w') as out:
+            for f in (METADATA_YAML, REFERENCES_YAML):
+                out.write('---\n')
+                if not os.path.exists(f):
+                    continue
+                with open(f, 'r') as y:
+                    out.write(f'###\n### {f}\n###\n')
+                    for line in y.readlines():
+                        if line.startswith('---'):
+                            continue
+                        out.write(line)
+                out.write('---\n')
+
+    return {
+        'actions':  [run],
+        'file_dep': [BUILD_FILE, METADATA_YAML, REFERENCES_YAML],
+        'targets':  [COMBINED_METADATA],
+        'clean':    True
+    }
+        
 def task_epub_metadata():
     '''
     Generate the ePub metadata file.
@@ -283,7 +313,7 @@ def task_combined():
     return {
         'actions':  [run],
         'file_dep': DEPS,
-        'targets':  ['tmp/temp.md'],
+        'targets':  [f'{TMP_DIR}/temp.md'],
         'clean':    True
     }
 
