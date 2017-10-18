@@ -202,7 +202,7 @@ def task_epub():
     def run(targets):
         with preprocess_markdown(*INPUT_FILE_LIST) as md:
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t epub " +
-               f"--toc --epub-stylesheet={EPUB_CSS} "
+               f"--epub-stylesheet={EPUB_CSS} "
                f"--epub-metadata={EPUB_METADATA} "
                f"--epub-cover-image={COVER_IMAGE} {TITLE_TXT} {md}")
 
