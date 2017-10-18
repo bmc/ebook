@@ -80,7 +80,7 @@ you're more or less on your own.
    uses the information in this file to create some of the content for your
    book.
 3. Edit the `book/copyright-template.md` file. You can leave `@YEAR@` and
-   `@OWNER@` alone; the Rakefile replaces those with `COPYRIGHT_OWNER`
+   `@OWNER@` alone; the build tool replaces those with `COPYRIGHT_OWNER`
    and `COPYRIGHT_YEAR` (defined in `metadata.py`), respectively.
    See [Markup Notes](#markup-notes) for details on extensions to normal
    Markdown.
