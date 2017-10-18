@@ -44,6 +44,20 @@ div.sep {
   font-size: 200%;
 }
 
+h1.title {
+  text-align: center;
+}
+
+h1.subtitle {
+  font-style: italic;
+  text-align: center;
+}
+
+h2.author {
+  text-align: center;
+  padding-bottom: 2em;
+}
+
 /**
  * End of additions by bmc@clapper.org
  */

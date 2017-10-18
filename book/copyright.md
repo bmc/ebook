@@ -1,6 +1,8 @@
 %newpage%
 
-{<} Copyright © @YEAR@ @OWNER@
+{<} Published by %publisher%
+
+{<} Copyright © %copyright-year% %copyright-owner%
 
 {<} All rights reserved. No part of this publication may be reproduced,
 distributed, or transmitted in any form or by any means, including

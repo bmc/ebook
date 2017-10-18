@@ -1,3 +1,9 @@
+**Version 0.3.0**
+
+* Reworked how the pandoc filter handles token substitution.
+* Moved metadata to a Pandoc-style metadata file.
+* Added more substitution tokens.
+
 **Version 0.2.0**
 
 * Reorganized files so the top directory isn't so cluttered.

@@ -6,8 +6,7 @@ import sys
 from shutil import *
 import os
 from glob import glob
-import re
-from contextlib import contextmanager
+from string import Template
 
 sys.path.insert(0, os.path.dirname(__file__))
 from lib import *
@@ -17,10 +16,6 @@ from lib import *
 # ---------------------------------------------------------------------------
 
 BOOK_SRC = 'book'
-METADATA = f'{BOOK_SRC}/metadata.py'
-
-import_from_file(METADATA, 'metadata')
-from metadata import *
 
 BUILD_FILE = 'build'
 
@@ -28,10 +23,8 @@ BUILD_FILE = 'build'
 
 OUTPUT_BASENAME    = 'book'
 
-COPYRIGHT          = 'tmp/copyright.md'
-EPUB_METADATA      = 'tmp/epub-metadata.xml'
-LATEX_TITLE        = 'tmp/latex-title.latex'
-TITLE_TXT          = f"tmp/{OUTPUT_BASENAME}-title.txt"
+EPUB_METADATA      = "tmp/epub-metadata.xml"
+LATEX_COVER_PAGE   = 'tmp/latex-title.latex'
 
 OUTPUT_HTML        = f"{OUTPUT_BASENAME}.html"
 OUTPUT_PDF         = f"{OUTPUT_BASENAME}.pdf"
@@ -41,25 +34,28 @@ OUTPUT_LATEX       = f"{OUTPUT_BASENAME}.latex"
 OUTPUT_JSON        = f"{OUTPUT_BASENAME}.json"
 
 # Input files
-def maybe_file(f):
-    if os.path.exists(f):
-        return [f]
-    else:
-        return []
 
-if os.path.isabs(COVER_IMAGE):
-    COVER_IMAGE_PATH = COVER_IMAGE
-else:
-    COVER_IMAGE_PATH = os.path.join(BOOK_SRC, COVER_IMAGE)
+EPUB_METADATA_TEMPLATE = 'files/epub-metadata.xml'
 
+REFERENCES         = f"{BOOK_SRC}/references.md"
+METADATA_YAML      = f"{BOOK_SRC}/metadata.yaml"
+
+metadata           = load_metadata(METADATA_YAML)
+uses_references    = has_references(metadata, REFERENCES)
+
+COVER_IMAGE        = f"{BOOK_SRC}/cover.png"
 CHAPTERS           = glob(f'{BOOK_SRC}/chapter-*.md')
-COPYRIGHT_TEMPLATE = f'{BOOK_SRC}/copyright-template.md'
-INPUT_FILE_LIST    = ([COPYRIGHT] +
-                      maybe_file(f"{BOOK_SRC}/dedication.md") +
-                      maybe_file(f"{BOOK_SRC}/prologue.md") +
-                      CHAPTERS +
-                      maybe_file(f"{BOOK_SRC}/epilogue.md") +
-                      maybe_file(f"{BOOK_SRC}/acknowledgments.md"))
+COPYRIGHT          = f'{BOOK_SRC}/copyright.md'
+INPUT_FILE_LIST    = (
+    [METADATA_YAML, COPYRIGHT] +
+    maybe_file(f"{BOOK_SRC}/dedication.md") +
+    maybe_file(f"{BOOK_SRC}/prologue.md") +
+    CHAPTERS +
+    maybe_file(f"{BOOK_SRC}/epilogue.md") +
+    maybe_file(f"{BOOK_SRC}/acknowledgments.md") +
+    ([REFERENCES] if uses_references else [])
+)
+
 INPUT_FILES        = ' '.join(INPUT_FILE_LIST)
 HTML_CSS           = 'files/html.css'
 EPUB_CSS           = 'files/epub.css'
@@ -69,12 +65,12 @@ REF_DOCX           = 'files/custom-reference.docx'
 PANDOC_FILTER      = "scripts/pandoc-filter.py"
 
 # Lists of dependencies, for ease of reference.
-DEPS       = INPUT_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, METADATA]
-EPUB_DEPS  = DEPS + [COVER_IMAGE_PATH, EPUB_METADATA, EPUB_CSS, TITLE_TXT]
-HTML_DEPS  = DEPS + [HTML_CSS, TITLE_TXT]
-PDF_DEPS   = DEPS + [LATEX_HEADER, LATEX_TITLE]
-LATEX_DEPS = DEPS + [LATEX_HEADER, LATEX_TITLE, LATEX_TEMPLATE]
-DOCX_DEPS  = DEPS + [TITLE_TXT, REF_DOCX]
+DEPS       = INPUT_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, METADATA_YAML]
+EPUB_DEPS  = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
+HTML_DEPS  = DEPS + [HTML_CSS]
+PDF_DEPS   = DEPS + [COVER_IMAGE, LATEX_HEADER]
+LATEX_DEPS = DEPS + [COVER_IMAGE, LATEX_HEADER, LATEX_COVER_PAGE, LATEX_TEMPLATE]
+DOCX_DEPS  = DEPS + [REF_DOCX]
 
 # +RTS and -RTS delimit Haskell runtime options. See
 # http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/runtime-control.html
@@ -82,11 +78,13 @@ DOCX_DEPS  = DEPS + [TITLE_TXT, REF_DOCX]
 # -Ksize sets the stack size. -K10m uses a 10 Mb stack, for instance. The
 # default size is 8M.
 
-
 HASKELL_OPTS = '+RTS -K20m -RTS'
 #HASKELL_OPTS = ''
 INPUT_FORMAT = "markdown+line_blocks+escaped_line_breaks"
-COMMON_PANDOC_OPTS = f"-F {PANDOC_FILTER} -s -f {INPUT_FORMAT} --smart {HASKELL_OPTS}"
+COMMON_PANDOC_OPTS = (
+    f"-F {PANDOC_FILTER} -s -f {INPUT_FORMAT} --smart {HASKELL_OPTS} " +
+    "-F pandoc-citeproc " if uses_references else ""
+)
 NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --top-level-division=chapter"
 LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE}"
 
@@ -105,7 +103,7 @@ DOIT_CONFIG = {
 def _latex(target):
     with preprocess_markdown(*INPUT_FILE_LIST) as md:
         sh(f"pandoc {LATEX_PANDOC_OPTS} -o {target} " +
-           f"{LATEX_HEADER} {LATEX_TITLE} {md}")
+           f"{LATEX_HEADER} {LATEX_COVER_PAGE} {md}")
 
 def task_clobber():
     '''
@@ -130,7 +128,7 @@ def task_html():
     def run(targets):
         with preprocess_markdown(*INPUT_FILE_LIST) as md:
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t html " +
-               f"--self-contained --css={HTML_CSS} {TITLE_TXT} {md}")
+               f"--self-contained --css={HTML_CSS} {md}")
 
     return {
         'actions': [run],
@@ -170,8 +168,7 @@ def task_json():
         with preprocess_markdown(*INPUT_FILE_LIST) as md:
             temp = '_ast.json'
             try:
-                sh(f'pandoc {NON_LATEX_PANDOC_OPTS} -o _ast.json -t json ' +
-                   f'{TITLE_TXT} {md}')
+                sh(f'pandoc {NON_LATEX_PANDOC_OPTS} -o _ast.json -t json {md}')
                 with open(temp, 'r') as f:
                     import json
                     js = json.load(f)
@@ -195,7 +192,7 @@ def task_docx():
     def run(targets):
         with preprocess_markdown(*INPUT_FILE_LIST) as md:
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t docx " +
-               f"--reference-docx={REF_DOCX} {TITLE_TXT} {md}")
+               f"--reference-docx={REF_DOCX} {md}")
 
     return {
         'actions': [run],
@@ -213,75 +210,13 @@ def task_epub():
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t epub " +
                f"--epub-stylesheet={EPUB_CSS} "
                f"--epub-metadata={EPUB_METADATA} "
-               f"--epub-cover-image={COVER_IMAGE_PATH} {TITLE_TXT} {md}")
+               f"--epub-cover-image={COVER_IMAGE} {md}")
 
     return {
         'actions': [run],
         'file_dep': EPUB_DEPS,
         'targets': [OUTPUT_EPUB],
         'clean':   True
-    }
-
-def task_copyright():
-    '''
-    Generate copyright file.
-    '''
-    def run(targets):
-        msg(f"{COPYRIGHT_TEMPLATE} -> {COPYRIGHT}")
-        with target_dir_for(COPYRIGHT):
-            with open(COPYRIGHT, 'w') as o:
-                with open(COPYRIGHT_TEMPLATE, 'r') as i:
-                    for line in i.readlines():
-                        new_line = (line.rstrip()
-                                        .replace('@YEAR@', str(COPYRIGHT_YEAR))
-                                        .replace('@OWNER@', COPYRIGHT_OWNER))
-                        o.write(f"{new_line}\n")
-
-    return {
-        'actions':  [run],
-        'file_dep': [BUILD_FILE, COPYRIGHT_TEMPLATE],
-        'targets':  [COPYRIGHT],
-        'clean':    True
-    }
-
-def task_epub_metadata():
-    '''
-    Generate ePub metadata file.
-    '''
-    def run(targets):
-        with target_dir_for(EPUB_METADATA):
-            with open(EPUB_METADATA, 'w') as out:
-                out.write(
-f'''<dc:rights>Copyright &#xa9; 2017 {COPYRIGHT_OWNER}</dc:rights>
-<dc:language>en-US</dc:language>
-<dc:publisher>{PUBLISHER}</dc:publisher>
-<dc:subject>Fantasy</dc:subject>
-'''
-                )
-
-    return {
-        'actions':  [run],
-        'file_dep': [BUILD_FILE],
-        'targets':  [EPUB_METADATA],
-        'clean':    True
-    }
-
-def task_title():
-    '''
-    Generate title.txt file.
-    '''
-    def run(targets):
-        with target_dir_for(TITLE_TXT):
-            with open(TITLE_TXT, 'w') as out:
-                out.write(f'% {TITLE}\n')
-                out.write(f'% {AUTHOR}\n')
-                out.write('\n')
-
-    return {
-        'actions':  [run],
-        'file_dep': [BUILD_FILE],
-        'targets':  [TITLE_TXT],
-        'clean':    True
     }
 
 def task_latex_title():
@@ -291,115 +226,67 @@ def task_latex_title():
     # Note: The following requires a custom LaTeX template with
     # \usepackage{graphicx} in the preamble.
     def run(targets):
-        with target_dir_for(LATEX_TITLE):
-            with open(LATEX_TITLE, 'w') as out:
+        with target_dir_for(LATEX_COVER_PAGE):
+            with open(LATEX_COVER_PAGE, 'w') as out:
                 out.write(r'\begin{titlepage}' + "\n")
-                out.write(r'\includegraphics{' + COVER_IMAGE_PATH + "}\n")
+                out.write(r'\includegraphics{' + COVER_IMAGE + "}\n")
                 out.write(r'\end{titlepage}' + "\n")
 
     return {
         'actions':  [run],
         'file_dep': [BUILD_FILE],
-        'targets':  [LATEX_TITLE],
+        'targets':  [LATEX_COVER_PAGE],
         'clean':    True
     }
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def msg(s):
-    sys.stderr.write(f"{s}\n")
-
-def sh(command):
-    msg(command)
-    if os.system(command) != 0:
-        sys.exit(1)
-
-@contextmanager
-def target_dir_for(file):
-    dir = os.path.dirname(file)
-    if not (dir == '.' or len(dir) == 0):
-        os.makedirs(dir, exist_ok=True)
-    yield
-
-@contextmanager
-def preprocess_markdown(*files):
-    msg(f"Preprocessing: {files}")
-    temp = '_temp.md'
-    file_without_dashes = re.compile(r'^[^a-z]*([a-z]+).*$')
-
-    try:
-        with open(temp, "w") as t:
-            for f in files:
-                basefile, _ = os.path.splitext(os.path.basename(f))
-                m = file_without_dashes.match(basefile)
-                if m:
-                    cls = m.group(1)
-                else:
-                    cls = basefile
-
-                # Added classes to each section. Can be used in CSS.
-                t.write(f'<div class="book_section section_{cls}">\n')
-                with open(f) as input:
-                    for line in input.readlines():
-                        t.write(f"{line.rstrip()}\n")
-                # Force a newline after each file.
-                t.write("\n")
-                t.write('</div>\n')
-
-        yield temp
-    finally:
-        if os.path.exists(temp):
-            os.unlink(temp)
-
-def rm_rf(paths, silent=False):
+def task_epub_metadata():
     '''
-    Recursively remove one or more files.
-
-    paths - a list or tuple of paths, or a string of one path
-    silent - whether or not to make noise about what's going on
+    Generate the ePub metadata file.
     '''
-    def do_rm(path):
-        if os.path.isdir(path):
-            if not silent:
-                msg(f'rm -rf {path}')
-            rmtree(path)
-        else:
-            rm_f(path)
-    
-    if isinstance(paths, list) or isinstance(paths, tuple):
-        for f in paths:
-            do_rm(f)
-    elif isinstance(paths, str):
-        do_rm(paths)
-    else:
-        from doit import TaskError
-        raise TaskError('rm_f() expects a list, a tuple or a string.')
+    def run(targets):
+        with open(targets[0], 'w') as out:
+            with open(EPUB_METADATA_TEMPLATE, 'r') as input:
+                template = ''.join(input.readlines())
 
+            msg(template)
+            identifier = metadata.get('identifier', {}).get('text', '')
+            scheme = metadata.get('identifier', {}).get('scheme', '')
+            copyright = metadata['copyright']
+            data = {
+                'identifier':        identifier,
+                'identifier_scheme': scheme,
+                'copyright_owner':   copyright['owner'],
+                'copyright_year':    copyright['year'],
+                'publisher':         metadata['publisher'],
+                'language':          metadata.get('language', 'en-US'),
+                'genre':             metadata.get('genre', '')
+            }
+            out.write(Template(template).substitute(data))
 
-def rm_f(paths, silent=False):
+    return {
+        'actions':  [run],
+        'file_dep': [EPUB_METADATA_TEMPLATE, BUILD_FILE],
+        'targets':  [EPUB_METADATA],
+        'clean':    True
+    }
+
+def task_combined():
     '''
-    Remove one or more files.
-
-    paths - a list or tuple of paths, or a string of one path
-    silent - whether or not to make noise about what's going on
+    Generated one big combined Markdown file (for debugging).
     '''
-    def do_rm(path):
-        if not silent:
-            msg(f"rm -f {path}")
-        if os.path.exists(path):
-            os.unlink(path)
+    def run(targets):
+        out = targets[0]
+        msg(f"Generating {out}.")
+        with target_dir_for(out):
+            with preprocess_markdown(*INPUT_FILE_LIST) as md:
+                copyfile(md, out)
 
-    if isinstance(paths, list) or isinstance(paths, tuple):
-        for f in paths:
-            do_rm(f)
-    elif isinstance(paths, str):
-        do_rm(paths)
-    else:
-        from doit import TaskError
-        raise TaskError('rm_f() expects a list, a tuple or a string.')
-
+    return {
+        'actions':  [run],
+        'file_dep': DEPS,
+        'targets':  ['tmp/temp.md'],
+        'clean':    True
+    }
 
 # ---------------------------------------------------------------------------
 # Main

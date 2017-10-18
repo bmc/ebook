@@ -37,10 +37,26 @@ h6 {
 }
 
 h1.title {
+  text-align: center;
 }
 
-h2.author {
+p.subtitle {
   font-style: italic;
+  font-size: larger;
+  font-weight: bold;
+  margin-left: 0;
+  margin-bottom: 1em;
+  text-align: center;
+}
+
+p.author {
+  margin-bottom: 1em;
+  text-align: center;
+}
+
+p.publisher {
+  margin-bottom: 1em;
+  text-align: center;
 }
 
 div.quote {

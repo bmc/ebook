@@ -73,12 +73,46 @@ you're more or less on your own.
 
 ### Initial Configuration
 
-1. In your `book` directory, create a cover image, as a PNG. If you haven't
-   settled on a cover image yet, you can use the dummy image that's already
-   there. **Currently, the cover image is not optional.**
-2. Edit `book/metadata.py`, and fill in the relevant pieces. The build script
-   uses the information in this file to create some of the content for your
-   book.
+#### Create your cover image
+
+In your `book` directory, create a cover image, as a PNG. If you haven't
+settled on a cover image yet, you can use the dummy image that's already
+there. **Currently, the cover image is not optional.**
+
+#### Fill in the metadata
+
+Edit `book/metadata.yaml`, and fill in the relevant pieces. Both Pandoc
+and the build tooling use this metadata.
+
+**Note**: This file contains 
+[Pandoc YAML Metadata](http://pandoc.org/MANUAL.html#extension-yaml_metadata_block),
+with some additional fields used by this build tooling.
+
+The following elements are _required_.
+
+- `title`: The book title
+
+- `author`: A YAML list of authors. If there is only one author, use a 
+  single-element YAML list. For example:
+  
+```yaml
+author:
+- Joe Horrid
+```
+
+```yaml
+author:
+- Joe Horrid
+- Frances Horrid
+```
+
+- `copyright`: A block with two required fields, `owner` and `year`. See the
+  existing sample `metadata.yaml` for an example.
+  
+- `publisher`: The publisher of the book.
+
+uses the information in this file to create some of the content for your book.
+
 3. Edit the `book/copyright-template.md` file. You can leave `@YEAR@` and
    `@OWNER@` alone; the build tool replaces those with `COPYRIGHT_OWNER`
    and `COPYRIGHT_YEAR` (defined in `metadata.py`), respectively.
@@ -97,6 +131,9 @@ extensions are enabled. See the
 * `escaped_line_breaks`: A backslash followed by a newline is also a hard
   line break.
   See <http://pandoc.org/MANUAL.html#extension-escaped_line_breaks> for details.
+
+* `yaml_metadata_block`: Allows metadata in the Markdown. See
+  See <http://pandoc.org/MANUAL.html#extension-yaml_metadata_block> for details.
 
 ### Additional Markup
 

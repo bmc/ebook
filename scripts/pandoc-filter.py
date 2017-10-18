@@ -12,10 +12,47 @@ https://github.com/jgm/pandoc/wiki/Pandoc-Filters
 import sys
 from panflute import *
 import os
+import re
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from lib import *
 
 LEFT_JUSTIFY = '{<}'
 CENTER_JUSTIFY = '{-}'
 RIGHT_JUSTIFY = '{>}'
+
+AUTHOR_PAT = re.compile(r'^(.*)%author%(.*)$')
+TITLE_PAT = re.compile(r'^(.*)%title%(.*)$')
+SUBTITLE_PAT = re.compile(r'^(.*)%subtitle%(.*)$')
+COPYRIGHT_OWNER_PAT = re.compile(r'^(.*)%copyright-owner%(.*)$')
+COPYRIGHT_YEAR_PAT = re.compile(r'^(.*)%copyright-year%(.*)$')
+PUBLISHER_PAT = re.compile(r'^(.*)%publisher%(.*)$')
+LANGUAGE_PAT = re.compile(r'^(.*)%language%(.*)$')
+
+# Patterns that are simple strings in the metadata.
+SIMPLE_PATTERNS = (
+    (TITLE_PAT, 'title'),
+    (SUBTITLE_PAT, 'subtitle'),
+    (COPYRIGHT_OWNER_PAT, 'copyright.owner'),
+    (COPYRIGHT_YEAR_PAT, 'copyright.year'),
+    (PUBLISHER_PAT, 'publisher'),
+    (LANGUAGE_PAT, 'language')
+)
+
+class DataHolder:
+    '''
+    Allows for assign-and-test. See 
+    http://code.activestate.com/recipes/66061-assign-and-test/
+    '''
+    def __init__(self, value=None):
+        self.value = value
+
+    def set(self, value):
+        self.value = value
+        return value
+
+    def get(self):
+        return self.value
 
 if sys.version_info < (3,6):
     print("Must use Python 3.6 or better.")
@@ -26,6 +63,9 @@ def debug(msg):
 
 def matches_text(elem, text):
     return isinstance(elem, Str) and elem.text == text
+
+def matches_pattern(elem, regex):
+    return regex.match(elem.text) if isinstance(elem, Str) else None
 
 def paragraph_starts_with_child(elem, string):
     if not type(elem) == Para:
@@ -99,11 +139,23 @@ def section_sep(elem, format):
     else:
         return elem
 
+def check_for_simple_pattern(elem, doc):
+    assert type(elem) == Str
+    
+    for pat, meta_key in SIMPLE_PATTERNS:
+        m = matches_pattern(elem, pat)
+        if m:
+            s = doc.get_metadata(meta_key, '')
+            return Str(f"{m.group(1)}{s}{m.group(2)}")
+
+    return elem
 
 def prepare(doc):
-    pass
+    # Validate the metadata
+    validate_metadata(doc.get_metadata())
 
 def transform(elem, doc):
+    data = DataHolder()
     if type(elem) == Header and elem.level == 1:
         new_elements = newpage(doc.format) + [elem]
         return Div(*new_elements)
@@ -123,11 +175,27 @@ def transform(elem, doc):
     elif paragraph_contains_child(elem, '+++'):
         return section_sep(elem, doc.format)
 
+    elif data.set(matches_pattern(elem, AUTHOR_PAT)):
+        authors = doc.get_metadata('author', [])
+        m = data.get()
+        author_str = ""
+        for i, a in enumerate(authors):
+            sep = ", " if i < (len(authors) - 1) else " and "
+            if i > 0:
+                author_str = f"{author_str}{sep}{a}"
+            else:
+                author_str = a
+
+        return Str(f"{m.group(1)}{author_str}{m.group(2)}")
+
+    elif type(elem) == Str:
+        return check_for_simple_pattern(elem, doc)
+
     else:
         return elem
 
 def main(doc=None):
-    return run_filter(transform, doc=doc)
+    return run_filter(transform, prepare=prepare, doc=doc)
 
 if __name__ == "__main__":
     main()
