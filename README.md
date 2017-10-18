@@ -67,7 +67,7 @@ Then, install the required software and update the configuration files.
    using a virtual environment), install the required Python packages with
    `pip install -r requirements.txt`
 
-**WARNING**: I avoid Windows as much as possible. I do not test (and, likely,
+**WARNING**: I avoid Windows as much as possible. I do not (and, likely,
 never will) test this stuff on Windows. If you insist on using that platform,
 you're more or less on your own.
 
