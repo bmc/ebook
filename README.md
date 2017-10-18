@@ -91,8 +91,12 @@ Your book will use Markdown, as interpreted by Pandoc. The following Pandoc
 extensions are enabled. See the
 [Pandoc User's Guide](http://pandoc.org/MANUAL.html) for full details.
 
-* `line_blocks`
-* `escaped_line_breaks`
+* `line_blocks`: Use vertical bars to create lines that are formatted as is.
+  See <http://pandoc.org/MANUAL.html#line-blocks> for details.
+
+* `escaped_line_breaks`: A backslash followed by a newline is also a hard
+  line break.
+  See <http://pandoc.org/MANUAL.html#extension-escaped_line_breaks> for details.
 
 ### Additional Markup
 
