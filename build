@@ -26,17 +26,21 @@ from metadata import *
 
 BUILD_FILE = 'build'
 
-
 # Generated files
-PREFIX       = 'book'
-OUTPUT_HTML  = f"{PREFIX}.html"
-OUTPUT_PDF   = f"{PREFIX}.pdf"
-OUTPUT_EPUB  = f"{PREFIX}.epub"
-OUTPUT_DOCX  = f"{PREFIX}.docx"
-OUTPUT_LATEX = f"{PREFIX}.latex"
-OUTPUT_JSON  = f"{PREFIX}.json"
-TITLE_TXT    = f"{PREFIX}-title.txt"
-LATEX_TITLE  = 'latex-title.latex'
+
+PREFIX             = 'book'
+
+COPYRIGHT          = 'tmp/_copyright.md'
+EPUB_METADATA      = 'tmp/epub-metadata.xml'
+LATEX_TITLE        = 'tmp/latex-title.latex'
+TITLE_TXT          = f"tmp/{PREFIX}-title.txt"
+
+OUTPUT_HTML        = f"{PREFIX}.html"
+OUTPUT_PDF         = f"{PREFIX}.pdf"
+OUTPUT_EPUB        = f"{PREFIX}.epub"
+OUTPUT_DOCX        = f"{PREFIX}.docx"
+OUTPUT_LATEX       = f"{PREFIX}.latex"
+OUTPUT_JSON        = f"{PREFIX}.json"
 
 # Input files
 def maybe_file(f):
@@ -45,22 +49,21 @@ def maybe_file(f):
     else:
         return []
 
-CHAPTERS           = glob('chapter-*.md')
-COPYRIGHT_TEMPLATE = 'copyright-template.md'
-COPYRIGHT          = '_copyright.md'
+CHAPTERS           = glob('book/chapter-*.md')
+COPYRIGHT_TEMPLATE = 'book/copyright-template.md'
 INPUT_FILE_LIST    = ([COPYRIGHT] +
-                      maybe_file("dedication.md") +
-                      maybe_file("prologue.md") +
+                      maybe_file("book/dedication.md") +
+                      maybe_file("book/prologue.md") +
                       CHAPTERS +
-                      maybe_file("epilogue.md") +
-                      maybe_file("acknowledgments.md"))
+                      maybe_file("book/epilogue.md") +
+                      maybe_file("book/acknowledgments.md"))
 INPUT_FILES        = ' '.join(INPUT_FILE_LIST)
-HTML_CSS           = 'html.css'
-EPUB_CSS           = 'epub.css'
-EPUB_METADATA      = 'epub-metadata.xml'
-LATEX_HEADER       = 'latex-header.txt'
-LATEX_TEMPLATE     = 'latex.template'
-PANDOC_FILTER      = "./pandoc-filter.py"
+HTML_CSS           = 'files/html.css'
+EPUB_CSS           = 'files/epub.css'
+LATEX_HEADER       = 'files/latex-header.txt'
+LATEX_TEMPLATE     = 'files/latex.template'
+REF_DOCX           = 'files/custom-reference.docx'
+PANDOC_FILTER      = "scripts/pandoc-filter.py"
 
 # Lists of dependencies, for ease of reference.
 DEPS       = INPUT_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, 'metadata.py']
@@ -68,7 +71,7 @@ EPUB_DEPS  = DEPS + [COVER_IMAGE, EPUB_METADATA, EPUB_CSS, TITLE_TXT]
 HTML_DEPS  = DEPS + [HTML_CSS, TITLE_TXT]
 PDF_DEPS   = DEPS + [LATEX_HEADER, LATEX_TITLE]
 LATEX_DEPS = DEPS + [LATEX_HEADER, LATEX_TITLE, LATEX_TEMPLATE]
-DOCX_DEPS  = DEPS
+DOCX_DEPS  = DEPS + [TITLE_TXT, REF_DOCX]
 
 # +RTS and -RTS delimit Haskell runtime options. See
 # http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/runtime-control.html
@@ -76,12 +79,13 @@ DOCX_DEPS  = DEPS
 # -Ksize sets the stack size. -K10m uses a 10 Mb stack, for instance. The
 # default size is 8M.
 
+
 HASKELL_OPTS = '+RTS -K20m -RTS'
 #HASKELL_OPTS = ''
 INPUT_FORMAT = "markdown+line_blocks+escaped_line_breaks"
 COMMON_PANDOC_OPTS = f"-F {PANDOC_FILTER} -s -f {INPUT_FORMAT} --smart {HASKELL_OPTS}"
 NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --top-level-division=chapter"
-LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --template=latex.template"
+LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE}"
 
 # ---------------------------------------------------------------------------
 # Tasks
@@ -119,14 +123,9 @@ def task_html():
     Generate HTML output.
     '''
     def run(targets):
-        temp = "_temp.html"
         with preprocess_markdown(*INPUT_FILE_LIST) as md:
-            try:
-                sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {temp} -t html " +
-                   f"--self-contained --css={HTML_CSS} {TITLE_TXT} {md}")
-
-            finally:
-                rm_f(temp, silent=True)
+            sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t html " +
+               f"--self-contained --css={HTML_CSS} {TITLE_TXT} {md}")
 
     return {
         'actions': [run],
@@ -191,7 +190,7 @@ def task_docx():
     def run(targets):
         with preprocess_markdown(*INPUT_FILE_LIST) as md:
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t docx " +
-               f"--reference-docx=custom-reference.docx {TITLE_TXT} {md}")
+               f"--reference-docx={REF_DOCX} {TITLE_TXT} {md}")
 
     return {
         'actions': [run],
@@ -224,13 +223,14 @@ def task_copyright():
     '''
     def run(targets):
         msg(f"{COPYRIGHT_TEMPLATE} -> {COPYRIGHT}")
-        with open(COPYRIGHT, 'w') as o:
-            with open(COPYRIGHT_TEMPLATE, 'r') as i:
-                for line in i.readlines():
-                    new_line = (line.rstrip()
-                                    .replace('@YEAR@', str(COPYRIGHT_YEAR))
-                                    .replace('@OWNER@', COPYRIGHT_OWNER))
-                    o.write(f"{new_line}\n")
+        with target_dir_for(COPYRIGHT):
+            with open(COPYRIGHT, 'w') as o:
+                with open(COPYRIGHT_TEMPLATE, 'r') as i:
+                    for line in i.readlines():
+                        new_line = (line.rstrip()
+                                        .replace('@YEAR@', str(COPYRIGHT_YEAR))
+                                        .replace('@OWNER@', COPYRIGHT_OWNER))
+                        o.write(f"{new_line}\n")
 
     return {
         'actions':  [run],
@@ -244,14 +244,15 @@ def task_epub_metadata():
     Generate ePub metadata file.
     '''
     def run(targets):
-        with open(EPUB_METADATA, 'w') as out:
-            out.write(
+        with target_dir_for(EPUB_METADATA):
+            with open(EPUB_METADATA, 'w') as out:
+                out.write(
 f'''<dc:rights>Copyright &#xa9; 2017 {COPYRIGHT_OWNER}</dc:rights>
 <dc:language>en-US</dc:language>
 <dc:publisher>{PUBLISHER}</dc:publisher>
 <dc:subject>Fantasy</dc:subject>
 '''
-            )
+                )
 
     return {
         'actions':  [run],
@@ -265,13 +266,11 @@ def task_title():
     Generate title.txt file.
     '''
     def run(targets):
-        with open(TITLE_TXT, 'w') as out:
-            out.write(
-f'''% {TITLE}
-% {AUTHOR}
-
-'''
-            )
+        with target_dir_for(TITLE_TXT):
+            with open(TITLE_TXT, 'w') as out:
+                out.write(f'% {TITLE}\n')
+                out.write(f'% {AUTHOR}\n')
+                out.write('\n')
 
     return {
         'actions':  [run],
@@ -287,10 +286,11 @@ def task_latex_title():
     # Note: The following requires a custom LaTeX template with
     # \usepackage{graphicx} in the preamble.
     def run(targets):
-        with open(LATEX_TITLE, 'w') as out:
-            out.write(r'\begin{titlepage}' + "\n")
-            out.write(r'\includegraphics{' + COVER_IMAGE + "}\n")
-            out.write(r'\end{titlepage}' + "\n")
+        with target_dir_for(LATEX_TITLE):
+            with open(LATEX_TITLE, 'w') as out:
+                out.write(r'\begin{titlepage}' + "\n")
+                out.write(r'\includegraphics{' + COVER_IMAGE + "}\n")
+                out.write(r'\end{titlepage}' + "\n")
 
     return {
         'actions':  [run],
@@ -310,6 +310,13 @@ def sh(command):
     msg(command)
     if os.system(command) != 0:
         sys.exit(1)
+
+@contextmanager
+def target_dir_for(file):
+    dir = os.path.dirname(file)
+    if not (dir == '.' or len(dir) == 0):
+        os.makedirs(dir, exist_ok=True)
+    yield
 
 @contextmanager
 def preprocess_markdown(*files):

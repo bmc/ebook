@@ -1,13 +1,9 @@
-book-title.txt
+/tmp
 book.epub
 book.json
 book.html
 book.docx
 book.pdf
 book.latex
-latex-title.latex
-epub-metadata.xml
-_copyright.md
-_temp.md
 doit-db.json
 __pycache__
