@@ -167,6 +167,24 @@ as a decent starting point for creating a Kindle version, via
 build tool. You should not need to edit it; editing `metadata.py` is
 sufficient to specify the information about your book.
 
+### Auto-building
+
+Because `./build` is a [doit](http://pydoit.org/) script, it supports
+_auto-building_. If you run it as follows:
+
+```
+./build auto
+```
+
+it will build your book (if it's not up-to-date), then wait; any time one or
+more of the source Markdown files changes, it will automatically rebuild your
+book. To stop it, just hit Ctrl-C.
+
+**NOTE**: Auto-building will _not_ detect the addition of new files. For
+instance, if you're running in auto-build mode, and you add a new
+`chapter-03.md` file, the build script will _not_ detect it. You'll have to
+kill the auto-build and restart it.
+
 ### Cleaning up generated files
 
 To clean up the built targets:
