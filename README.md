@@ -148,8 +148,8 @@ subdirectory and to adhere to the following conventions:
 
 ## Building
 
-Once you've prepared everything (see below), you can rebuild the book
-by running the command:
+Once you've prepared everything, as described above, you can rebuild the
+book by running the command:
 
 ```
 ./build
