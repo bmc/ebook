@@ -3,7 +3,7 @@
 ## Overview
 
 This repository is a template for a project that'll build an eBook (in
-ePub, PDF and HTML form) from Markdown input files.
+ePub, PDF, Microsoft Word and HTML form) from Markdown input files.
 
 tl;dr: You write your book as a series of Markdown files, adhering to some
 [file naming conventions](#book-source-file-names), and you run the `./build`
