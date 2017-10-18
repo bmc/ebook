@@ -42,7 +42,7 @@ Then, install the required software and update the configuration files.
    book.
 3. Edit the `copyright-template.md` file. You can leave `@YEAR@` and
    `@OWNER@` alone; the Rakefile replaces those with `COPYRIGHT_OWNER`
-   and `COPYRIGHT_YEAR` (defined in `book-metadata.rb`), respectively.
+   and `COPYRIGHT_YEAR` (defined in `metadata.py`), respectively.
    See [Markup Notes](#markup-notes) for details on extensions to normal
    Markdown.
 
