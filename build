@@ -123,21 +123,7 @@ def task_html():
         with preprocess_markdown(*INPUT_FILE_LIST) as md:
             try:
                 sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {temp} -t html " +
-                   f"-css={HTML_CSS} {TITLE_TXT} {md}")
-                # Post-process the HTML to force the stylesheet inline,
-                # so that it's truly standalone.
-                css_line = re.compile(r'^.*<link.*type="text/css".*>\s*$')
-                with open(temp, 'r') as html:
-                    with open(targets[0], 'w') as out:
-                        for line in html.readlines():
-                            line = line.rstrip()
-                            if css_line.match(line):
-                                out.write('<style type="text/css">\n')
-                                with open(HTML_CSS, 'r') as css:
-                                    copyfileobj(css, out)
-                                out.write('</style>')
-                            else:
-                                out.write(f"{line}\n")
+                   f"--self-contained --css={HTML_CSS} {TITLE_TXT} {md}")
 
             finally:
                 rm_f(temp, silent=True)
@@ -340,7 +326,8 @@ def preprocess_markdown(*files):
                     cls = m.group(1)
                 else:
                     cls = basefile
-                msg(f'base={basefile}, cls={cls}')
+
+                # Added classes to each section. Can be used in CSS.
                 t.write(f'<div class="book_section section_{cls}">\n')
                 with open(f) as input:
                     for line in input.readlines():
