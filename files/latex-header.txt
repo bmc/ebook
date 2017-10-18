@@ -1,2 +1,0 @@
-\setlength{\parindent}{2.0em}
-\setlength{\parskip}{0in}

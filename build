@@ -46,7 +46,9 @@ uses_references    = has_references(metadata, REFERENCES)
 COVER_IMAGE        = f"{BOOK_SRC}/cover.png"
 CHAPTERS           = glob(f'{BOOK_SRC}/chapter-*.md')
 COPYRIGHT          = f'{BOOK_SRC}/copyright.md'
-INPUT_FILE_LIST    = (
+LATEX_HEADER       = 'files/header.latex'
+
+BOOK_FILE_LIST    = (
     [METADATA_YAML, COPYRIGHT] +
     maybe_file(f"{BOOK_SRC}/dedication.md") +
     maybe_file(f"{BOOK_SRC}/prologue.md") +
@@ -56,20 +58,17 @@ INPUT_FILE_LIST    = (
     ([REFERENCES] if uses_references else [])
 )
 
-INPUT_FILES        = ' '.join(INPUT_FILE_LIST)
 HTML_CSS           = 'files/html.css'
 EPUB_CSS           = 'files/epub.css'
-LATEX_HEADER       = 'files/latex-header.txt'
 LATEX_TEMPLATE     = 'files/latex.template'
 REF_DOCX           = 'files/custom-reference.docx'
 PANDOC_FILTER      = "scripts/pandoc-filter.py"
 
 # Lists of dependencies, for ease of reference.
-DEPS       = INPUT_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, METADATA_YAML]
+DEPS       = BOOK_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, METADATA_YAML]
 EPUB_DEPS  = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
 HTML_DEPS  = DEPS + [HTML_CSS]
-PDF_DEPS   = DEPS + [COVER_IMAGE, LATEX_HEADER]
-LATEX_DEPS = DEPS + [COVER_IMAGE, LATEX_HEADER, LATEX_COVER_PAGE, LATEX_TEMPLATE]
+LATEX_DEPS = DEPS + [COVER_IMAGE, LATEX_COVER_PAGE, LATEX_TEMPLATE, LATEX_HEADER]
 DOCX_DEPS  = DEPS + [REF_DOCX]
 
 # +RTS and -RTS delimit Haskell runtime options. See
@@ -86,7 +85,8 @@ COMMON_PANDOC_OPTS = (
     "-F pandoc-citeproc " if uses_references else ""
 )
 NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --top-level-division=chapter"
-LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE}"
+LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
+                     f"-t latex -H {LATEX_HEADER} {LATEX_COVER_PAGE}")
 
 # ---------------------------------------------------------------------------
 # Tasks
@@ -101,9 +101,8 @@ DOIT_CONFIG = {
 }
 
 def _latex(target):
-    with preprocess_markdown(*INPUT_FILE_LIST) as md:
-        sh(f"pandoc {LATEX_PANDOC_OPTS} -o {target} " +
-           f"{LATEX_HEADER} {LATEX_COVER_PAGE} {md}")
+    with preprocess_markdown(*BOOK_FILE_LIST) as md:
+        sh(f"pandoc {LATEX_PANDOC_OPTS} -o {target} {md}")
 
 def task_clobber():
     '''
@@ -126,7 +125,7 @@ def task_html():
     Generate HTML output.
     '''
     def run(targets):
-        with preprocess_markdown(*INPUT_FILE_LIST) as md:
+        with preprocess_markdown(*BOOK_FILE_LIST) as md:
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t html " +
                f"--self-contained --css={HTML_CSS} {md}")
 
@@ -165,7 +164,7 @@ def task_json():
     Generate Pandoc AST JSON, pretty-printed (for debugging).
     '''
     def run(targets):
-        with preprocess_markdown(*INPUT_FILE_LIST) as md:
+        with preprocess_markdown(*BOOK_FILE_LIST) as md:
             temp = '_ast.json'
             try:
                 sh(f'pandoc {NON_LATEX_PANDOC_OPTS} -o _ast.json -t json {md}')
@@ -190,7 +189,7 @@ def task_docx():
     Generate MS Word output.
     '''
     def run(targets):
-        with preprocess_markdown(*INPUT_FILE_LIST) as md:
+        with preprocess_markdown(*BOOK_FILE_LIST) as md:
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t docx " +
                f"--reference-docx={REF_DOCX} {md}")
 
@@ -206,7 +205,7 @@ def task_epub():
     Generate ePub output.
     '''
     def run(targets):
-        with preprocess_markdown(*INPUT_FILE_LIST) as md:
+        with preprocess_markdown(*BOOK_FILE_LIST) as md:
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t epub " +
                f"--epub-stylesheet={EPUB_CSS} "
                f"--epub-metadata={EPUB_METADATA} "
@@ -278,7 +277,7 @@ def task_combined():
         out = targets[0]
         msg(f"Generating {out}.")
         with target_dir_for(out):
-            with preprocess_markdown(*INPUT_FILE_LIST) as md:
+            with preprocess_markdown(*BOOK_FILE_LIST) as md:
                 copyfile(md, out)
 
     return {
