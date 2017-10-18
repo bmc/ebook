@@ -129,45 +129,6 @@ Edit the `book/copyright.md` file. You can leave `%` tokens in there; they'll
 be substituted as described, below, in [Additional Markup](#additional-markup).
 The meaning of the `{<}` is also explained in that section.
 
-#### Bibliographic references
-
-If you're writing a book that needs a bibliography _and_ uses citations in
-the text, there's a bit of extra work.
-
-First, install [`pandoc-citeproc`](https://github.com/jgm/pandoc-citeproc).
-
-* On Mac OS, use `brew install pandoc-citeproc`.
-* On Ubuntu/Debian, it should have been installed when you installed `pandoc`.
-* On Windows, it should have been installed when you installed `pandoc`.
-
-Next, you'll need to create the bibliography YAML file,
-`book/references.yaml`, suitably organized for `pandoc` to consume. The sample
-`book/references.yaml` contains a single entry. You can hand-code this file,
-or you can use `pandoc-citeproc` to generate it from an existing bibliographic
-file (e.g., a BibTeX file).
-
-See the [citations section][] in the Pandoc User's Guide and the
-[`pandoc-citeproc` man page](https://github.com/jgm/pandoc-citeproc/blob/master/man/pandoc-citeproc.1.md)
-for more details.
-
-**NOTE**: The presence of a `book/references.yaml` file triggers the build
-tooling to include a **References** chapter, to which `pandoc` will add any
-cited works. Your bibliography (`book/references.yaml`) can contain as many
-references as you want; only the ones you actually cite in your text will show
-up in the References section. If your text contains no citations, the
-References section will be empty. The build tooling does _not_ check first to
-see whether you actually have any citations in your text.
-
-An example of a citation is:
-
-```
-[See @WatsonCrick1953]
-```
-
-Again, see the [citations section][] of the [Pandoc User's Guide][] for
-full details.
-
-
 ## Markup Notes
 
 Your book will use Markdown, as interpreted by Pandoc. The following Pandoc
@@ -235,6 +196,49 @@ subdirectory and to adhere to the following conventions:
 * If you create a file called `acknowledgments.md`, it'll be placed after the
   epilogue. If you don't want an acknowledgements chapter, simply delete the
   provided `acknowledgments.md`.
+
+* If you need a references (bibliography) section, create `references.yaml`,
+  as described below. If you don't need a bibliography section, just delete
+  the provided sample `references.yaml`.
+  
+### Bibliographic references
+
+If you're writing a book that needs a bibliography _and_ uses citations in
+the text, there's a bit of extra work.
+
+First, install [`pandoc-citeproc`](https://github.com/jgm/pandoc-citeproc).
+
+* On Mac OS, use `brew install pandoc-citeproc`.
+* On Ubuntu/Debian, it should have been installed when you installed `pandoc`.
+* On Windows, it should have been installed when you installed `pandoc`.
+
+Next, you'll need to create the bibliography YAML file,
+`book/references.yaml`, suitably organized for `pandoc` to consume. The sample
+`book/references.yaml` contains a single entry. You can hand-code this file,
+or you can use `pandoc-citeproc` to generate it from an existing bibliographic
+file (e.g., a BibTeX file).
+
+See the [citations section][] in the Pandoc User's Guide and the
+[`pandoc-citeproc` man page](https://github.com/jgm/pandoc-citeproc/blob/master/man/pandoc-citeproc.1.md)
+for more details.
+
+**NOTE**: The presence of a `book/references.yaml` file triggers the build
+tooling to include a **References** chapter, to which `pandoc` will add any
+cited works. Your bibliography (`book/references.yaml`) can contain as many
+references as you want; only the ones you actually cite in your text will show
+up in the References section. If your text contains no citations, the
+References section will be empty. The build tooling does _not_ check first to
+see whether you actually have any citations in your text.
+
+An example of a citation is:
+
+```
+[See @WatsonCrick1953]
+```
+
+Again, see the [citations section][] of the [Pandoc User's Guide][] for
+full details.
+  
 
 ## Building
 
