@@ -11,6 +11,7 @@ https://github.com/jgm/pandoc/wiki/Pandoc-Filters
 
 import sys
 from panflute import *
+import os
 
 LEFT_JUSTIFY = '{<}'
 CENTER_JUSTIFY = '{-}'
@@ -99,7 +100,10 @@ def section_sep(elem, format):
         return elem
 
 
-def xform(elem, doc):
+def prepare(doc):
+    pass
+
+def transform(elem, doc):
     if type(elem) == Header and elem.level == 1:
         new_elements = newpage(doc.format) + [elem]
         return Div(*new_elements)
@@ -123,7 +127,7 @@ def xform(elem, doc):
         return elem
 
 def main(doc=None):
-    return run_filter(xform, doc=doc)
+    return run_filter(transform, doc=doc)
 
 if __name__ == "__main__":
     main()
