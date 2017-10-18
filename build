@@ -76,8 +76,10 @@ REF_DOCX           = f'{FILES_DIR}/custom-reference.docx'
 PANDOC_FILTER      = 'scripts/pandoc-filter.py'
 
 # Lists of dependencies, for ease of reference.
-METADATA_DEPS = ([METADATA_YAML, LATEX_METADATA_YAML] +
-                 [REFERENCES_YAML] if uses_references else [])
+METADATA_DEPS = (
+    [METADATA_YAML, LATEX_METADATA_YAML] +
+    ([REFERENCES_YAML] if uses_references else [])
+)
 DEPS          = BOOK_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, COMBINED_METADATA]
 EPUB_DEPS     = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
 HTML_DEPS     = DEPS + [HTML_CSS]
@@ -96,7 +98,7 @@ HASKELL_OPTS = '+RTS -K20m -RTS'
 INPUT_FORMAT = "markdown+line_blocks+escaped_line_breaks"
 COMMON_PANDOC_OPTS = (
     f"-F {PANDOC_FILTER} -s -f {INPUT_FORMAT} --smart {HASKELL_OPTS} " +
-    "-F pandoc-citeproc " if uses_references else ""
+    ("-F pandoc-citeproc " if uses_references else "")
 )
 NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --top-level-division=chapter"
 LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
@@ -274,18 +276,21 @@ def task_combined_metadata():
     Generate the consolidated metadata file.
     '''
     def run(targets):
-        with open(targets[0], 'w') as out:
-            out.write('---\n')
-            for f in METADATA_DEPS:
-                if not os.path.exists(f):
-                    continue
-                with open(f, 'r') as y:
-                    out.write(f'###\n### {f}\n###\n')
-                    for line in y.readlines():
-                        if line.startswith('---'):
-                            continue
-                        out.write(line)
-            out.write('---\n')
+        target = targets[0]
+        with target_dir_for(target):
+            with open(target, 'w') as out:
+                out.write('---\n')
+                for f in METADATA_DEPS:
+                    if not os.path.exists(f):
+                        continue
+
+                    with open(f, 'r') as y:
+                        out.write(f'###\n### {f}\n###\n')
+                        for line in y.readlines():
+                            if line.startswith('---'):
+                                continue
+                            out.write(line)
+                out.write('\n...\n')
 
     return {
         'actions':  [run],
