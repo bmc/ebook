@@ -114,8 +114,10 @@ def task_clobber():
     def run(targets):
         sh('./build clean -a')
         rm_f(glob('*.bak'))
-        if os.path.exists('__pycache__'):
-            rmtree('__pycache__')
+        rm_rf('__pycache__')
+        rm_rf('lib/__pycache__')
+        rm_rf(f'{BOOK_SRC}__pycache__')
+        rm_rf('tmp')
 
     return {
         'actions': [run]
@@ -351,11 +353,37 @@ def preprocess_markdown(*files):
         if os.path.exists(temp):
             os.unlink(temp)
 
+def rm_rf(paths, silent=False):
+    '''
+    Recursively remove one or more files.
+
+    paths - a list or tuple of paths, or a string of one path
+    silent - whether or not to make noise about what's going on
+    '''
+    def do_rm(path):
+        if os.path.isdir(path):
+            if not silent:
+                msg(f'rm -rf {path}')
+            rmtree(path)
+        else:
+            rm_f(path)
+    
+    if isinstance(paths, list) or isinstance(paths, tuple):
+        for f in paths:
+            do_rm(f)
+    elif isinstance(paths, str):
+        do_rm(paths)
+    else:
+        from doit import TaskError
+        raise TaskError('rm_f() expects a list, a tuple or a string.')
+
+
 def rm_f(paths, silent=False):
     '''
     Remove one or more files.
 
     paths - a list or tuple of paths, or a string of one path
+    silent - whether or not to make noise about what's going on
     '''
     def do_rm(path):
         if not silent:
