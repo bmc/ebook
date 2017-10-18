@@ -6,41 +6,39 @@ import sys
 from shutil import *
 import os
 from glob import glob
-import importlib.util
 import re
 from contextlib import contextmanager
 
-def import_from_file(path, module_name):
-    spec = importlib.util.spec_from_file_location(module_name, path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    sys.modules[module_name] = mod
-
-import_from_file('metadata.py', 'metadata')
-
-from metadata import *
+sys.path.insert(0, os.path.dirname(__file__))
+from lib import *
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
+BOOK_SRC = 'book'
+METADATA = f'{BOOK_SRC}/metadata.py'
+
+import_from_file(METADATA, 'metadata')
+from metadata import *
+
 BUILD_FILE = 'build'
 
 # Generated files
 
-PREFIX             = 'book'
+OUTPUT_BASENAME    = 'book'
 
-COPYRIGHT          = 'tmp/_copyright.md'
+COPYRIGHT          = 'tmp/copyright.md'
 EPUB_METADATA      = 'tmp/epub-metadata.xml'
 LATEX_TITLE        = 'tmp/latex-title.latex'
-TITLE_TXT          = f"tmp/{PREFIX}-title.txt"
+TITLE_TXT          = f"tmp/{OUTPUT_BASENAME}-title.txt"
 
-OUTPUT_HTML        = f"{PREFIX}.html"
-OUTPUT_PDF         = f"{PREFIX}.pdf"
-OUTPUT_EPUB        = f"{PREFIX}.epub"
-OUTPUT_DOCX        = f"{PREFIX}.docx"
-OUTPUT_LATEX       = f"{PREFIX}.latex"
-OUTPUT_JSON        = f"{PREFIX}.json"
+OUTPUT_HTML        = f"{OUTPUT_BASENAME}.html"
+OUTPUT_PDF         = f"{OUTPUT_BASENAME}.pdf"
+OUTPUT_EPUB        = f"{OUTPUT_BASENAME}.epub"
+OUTPUT_DOCX        = f"{OUTPUT_BASENAME}.docx"
+OUTPUT_LATEX       = f"{OUTPUT_BASENAME}.latex"
+OUTPUT_JSON        = f"{OUTPUT_BASENAME}.json"
 
 # Input files
 def maybe_file(f):
@@ -49,14 +47,14 @@ def maybe_file(f):
     else:
         return []
 
-CHAPTERS           = glob('book/chapter-*.md')
-COPYRIGHT_TEMPLATE = 'book/copyright-template.md'
+CHAPTERS           = glob(f'{BOOK_SRC}/chapter-*.md')
+COPYRIGHT_TEMPLATE = f'{BOOK_SRC}/copyright-template.md'
 INPUT_FILE_LIST    = ([COPYRIGHT] +
-                      maybe_file("book/dedication.md") +
-                      maybe_file("book/prologue.md") +
+                      maybe_file(f"{BOOK_SRC}/dedication.md") +
+                      maybe_file(f"{BOOK_SRC}/prologue.md") +
                       CHAPTERS +
-                      maybe_file("book/epilogue.md") +
-                      maybe_file("book/acknowledgments.md"))
+                      maybe_file(f"{BOOK_SRC}/epilogue.md") +
+                      maybe_file(f"{BOOK_SRC}/acknowledgments.md"))
 INPUT_FILES        = ' '.join(INPUT_FILE_LIST)
 HTML_CSS           = 'files/html.css'
 EPUB_CSS           = 'files/epub.css'
@@ -66,7 +64,7 @@ REF_DOCX           = 'files/custom-reference.docx'
 PANDOC_FILTER      = "scripts/pandoc-filter.py"
 
 # Lists of dependencies, for ease of reference.
-DEPS       = INPUT_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, 'metadata.py']
+DEPS       = INPUT_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, METADATA]
 EPUB_DEPS  = DEPS + [COVER_IMAGE, EPUB_METADATA, EPUB_CSS, TITLE_TXT]
 HTML_DEPS  = DEPS + [HTML_CSS, TITLE_TXT]
 PDF_DEPS   = DEPS + [LATEX_HEADER, LATEX_TITLE]
