@@ -12,6 +12,30 @@ command (see [Building](#building)) to build your book.
 There are sample files in this repository, so you can build a (completely
 pointless and utterly useless) eBook right away.
 
+## What's Where
+
+* Your book's Markdown sources, cover image, and some metadata go in the
+  `book` subdirectory. This is where you'll be doing your editing.
+
+* The `files` subdirectory contains files used by the build. For instance, the
+  HTML and ePub style sheets are there, as are LaTeX templates (used for PDF
+  output) and a Microsoft Word style reference document. You shouldn't need to
+  touch anything in `files`.
+  
+* The `scripts` subdirectory currently just contains a Pandoc filter used to
+  provide [enhanced markup](#additional-markup). You shouldn't need to touch
+  anything in `scripts`.
+  
+* The `lib` directory contains some additional Python code used by the build.
+  Ignore it.
+
+* Your book output files (`book.docx`, `book.epub`, `book.pdf` and
+  `book.html`) are generated in the topmost directory.
+  
+* The build will also generate a subdirectory called `tmp` to hold some
+  temporary files. Git is configured to ignore that directory.
+  
+
 ## Getting Started
 
 Start by downloading and unpacking the latest
@@ -32,24 +56,23 @@ Then, install the required software and update the configuration files.
 3. Install a Python distribution, version 3.6 or better.
 4. Install the required Python packages: `pip install -r requirements.txt`
 
-
 ### Initial Configuration
 
-1. Create a cover image, as a PNG. Use a dummy image, if you haven't
-   settled on a cover yet.
-2. Edit `metadata.py`, and fill in the relevant pieces. The build script
+1. In your `book` directory, create a cover image, as a PNG. If you haven't
+   settled on a cover image yet, you can use the dummy image that's already
+   there.
+2. Edit `book/metadata.py`, and fill in the relevant pieces. The build script
    uses the information in this file to create some of the content for your
    book.
-3. Edit the `copyright-template.md` file. You can leave `@YEAR@` and
+3. Edit the `book/copyright-template.md` file. You can leave `@YEAR@` and
    `@OWNER@` alone; the Rakefile replaces those with `COPYRIGHT_OWNER`
    and `COPYRIGHT_YEAR` (defined in `metadata.py`), respectively.
    See [Markup Notes](#markup-notes) for details on extensions to normal
    Markdown.
 
-
 ## Markup Notes
 
-Write your book in Markdown, as interpreted by Pandoc. The following Pandoc
+Your book will use Markdown, as interpreted by Pandoc. The following Pandoc
 extensions are enabled. See the
 [Pandoc User's Guide](http://pandoc.org/MANUAL.html) for full details.
 
@@ -58,19 +81,19 @@ extensions are enabled. See the
 
 ### Additional Markup
 
-The tooling has uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
-(in `pandoc-filter.py`) to enrich the Markdown slightly:
+The build tool uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
+(in `scripts/pandoc-filter.py`) to enrich the Markdown slightly:
 
 1. Level 1 headings denote new chapters and force a new page.
 2. If you want to force a new page without starting a new chapter, just
    include a paragraph containing only the line `%newpage%`. The 
    _entire paragraph_ is replaced with a new page directive (except in HTML),
    so don't put any extra content in this paragraph. See
-   `copyright-template.md` for an example.
+   `book/copyright-template.md` for an example.
 3. A paragraph containing just the line `+++` is replaced by a centered line
    containing "• • •". This is a useful separator.
 4. A paragraph that starts with `{<}` followed by at least one space is
-   left-justified. See `copyright-template.md` for an example.
+   left-justified. See `book/copyright-template.md` for an example.
 5. A paragraph that starts with `{>}` followed by at least one space is
    right-justified.
 6. A paragraph that starts with `{|}` followed by at least one space is
@@ -78,8 +101,8 @@ The tooling has uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
 
 ## Book Source File Names
 
-The tooling expects your book's Markdown sources to adhere to the
-following conventions:
+The tooling expects your book's Markdown sources to be in the `book`
+subdirectory and to adhere to the following conventions:
 
 * All files must have the extension `.md`.
 
