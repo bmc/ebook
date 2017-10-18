@@ -53,17 +53,23 @@ Then, install the required software and update the configuration files.
       and ensure that `/Library/TeX/texbin` is in your path.
     * On Ubuntu/Debian, install `texlive`, `texlive-latex-recommended` and
       `texlive-latex-extras`.
+    * On Windows, this might work: <https://www.tug.org/texlive/windows.html>.
 3. Install a Python distribution, version 3.6 or better.
     * On the Mac, `brew install python3` will suffice.
     * On Ubuntu/Debian,
       [this article](https://unix.stackexchange.com/questions/332641/how-to-install-python-3-6)
       might help.
+    * On Windows, see <https://www.python.org/downloads/windows/>.
 4. I recommend creating and activating a
    [Python virtual environment](https://virtualenv.pypa.io/en/stable/),
    to keep the installed version of Python 3 more or less pristine.
 5. Once you have your Python 3 environment set up (and activated, if you're
    using a virtual environment), install the required Python packages with
    `pip install -r requirements.txt`
+
+**WARNING**: I avoid Windows as much as possible. I have not (and, likely,
+will never) test this stuff on Windows. If you insist on using that platform,
+you're more or less on your own.
 
 ### Initial Configuration
 
