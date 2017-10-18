@@ -146,8 +146,7 @@ Next, you'll need to create the bibliography YAML file,
 or you can use `pandoc-citeproc` to generate it from an existing bibliographic
 file (e.g., a BibTeX file).
 
-See the [citations section]()
-in the Pandoc User's Guide and the
+See the [citations section][] in the Pandoc User's Guide and the
 [`pandoc-citeproc` man page](https://github.com/jgm/pandoc-citeproc/blob/master/man/pandoc-citeproc.1.md)
 for more details.
 
