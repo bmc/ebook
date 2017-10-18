@@ -47,14 +47,23 @@ Then, install the required software and update the configuration files.
 
 ### Required Software
 
-1. Install [pandoc](http://pandoc.org).
+1. Install [pandoc](http://pandoc.org/installing.html).
 2. Install a TexLive distribution, to generate the PDF. 
     * On the Mac, use [MacTex](https://www.tug.org/mactex/mactex-download.html),
       and ensure that `/Library/TeX/texbin` is in your path.
     * On Ubuntu/Debian, install `texlive`, `texlive-latex-recommended` and
       `texlive-latex-extras`.
 3. Install a Python distribution, version 3.6 or better.
-4. Install the required Python packages: `pip install -r requirements.txt`
+    * On the Mac, `brew install python3` will suffice.
+    * On Ubuntu/Debian,
+      [this article](https://unix.stackexchange.com/questions/332641/how-to-install-python-3-6)
+      might help.
+4. I recommend creating and activating a
+   [Python virtual environment](https://virtualenv.pypa.io/en/stable/),
+   to keep the installed version of Python 3 more or less pristine.
+5. Once you have your Python 3 environment set up (and activated, if you're
+   using a virtual environment), install the required Python packages with
+   `pip install -r requirements.txt`
 
 ### Initial Configuration
 
