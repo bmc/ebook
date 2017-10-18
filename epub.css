@@ -1,0 +1,93 @@
+/* This defines styles and classes used in the book */
+body {
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-top: 5%;
+    margin-bottom: 5%;
+    text-align: justify;
+    font-size: medium;
+}
+
+code {
+  font-family: monospace;
+}
+
+h1 {
+  text-align: center;
+}
+
+h2 {
+  text-align: center;
+}
+
+h3 {
+  text-align: center;
+}
+
+h4 {
+  text-align: center;
+}
+
+h5 {
+  text-align: center;
+}
+
+h6 {
+  text-align: center;
+}
+
+h1.title {
+}
+
+h2.author {
+  font-style: italic;
+}
+
+div.quote {
+}
+
+div.line_block {
+  text-indent: 0;
+  margin-left: 5%;
+  margin-right: 5%;
+  margin-top: 5%;
+  margin-bottom: 5%;
+  p {
+    text-align: justify;
+    text-indent: 0 !important;
+  }
+}
+
+/*
+  Classic paragraph: First line indented, no vertical space between paragraphs.
+*/
+p {
+  text-indent: +2em;
+  text-align: justify;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+div.left p {
+  margin-top: 1em;
+  text-indent: 0;
+  text-align: left;
+}
+
+div.center p {
+  margin-top: 1em;
+  text-indent: 0;
+  text-align: center;
+}
+
+div.right p {
+  margin-top: 1em;
+  text-indent: 0;
+  text-align: right;
+}
+
+div.sep {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  text-align: center;
+}
