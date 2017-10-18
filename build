@@ -110,11 +110,25 @@ DOCX_PANDOC_OPTS = ''
 
 DOIT_DB = 'doit-db.json'
 
+DEFAULT_TASKS = ['html', 'pdf', 'docx', 'epub']
+
 DOIT_CONFIG = {
-    'default_tasks': ['html', 'pdf', 'docx', 'epub'],
+    'default_tasks': DEFAULT_TASKS,
     'backend': 'json',
     'dep_file': DOIT_DB
 }
+
+def _no_op(targets):
+    pass
+
+def task_all():
+    '''
+    Convenient way to generate all default book formats.
+    '''
+    return {
+        'actions':  [_no_op],
+        'task_dep': DEFAULT_TASKS
+    }
 
 def _latex(target):
     with preprocess_markdown(*BOOK_FILE_LIST) as md:
@@ -289,7 +303,6 @@ def task_epub_metadata():
             with open(EPUB_METADATA_TEMPLATE, 'r') as input:
                 template = ''.join(input.readlines())
 
-            msg(template)
             identifier = metadata.get('identifier', {}).get('text', '')
             scheme = metadata.get('identifier', {}).get('scheme', '')
             copyright = metadata['copyright']
