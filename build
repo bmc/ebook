@@ -197,7 +197,7 @@ def task_docx():
 
 def task_epub():
     '''
-    Generate MS Word output.
+    Generate ePub output.
     '''
     def run(targets):
         with preprocess_markdown(*INPUT_FILE_LIST) as md:
