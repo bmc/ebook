@@ -300,8 +300,8 @@ sufficient to specify the information about your book.
 
 ### Auto-building
 
-Because `./build` is a [doit](http://pydoit.org/) script, it supports
-_auto-building_. If you run it as follows:
+Because `./build` is a [doit][] script, it supports _auto-building_. If you
+run it as follows:
 
 ```
 ./build auto
@@ -330,5 +330,27 @@ To clean _everything_ out (except `doit-db.json`, which won't go away):
 ./build clobber
 ```
 
+
+### Other useful build targets
+
+* `./build docx`: Build just the Microsoft Word version of the book.
+* `./build pdf`: Build just the PDF version of the book.
+* `./build epub`: Build just the ePub version of the book.
+* `./build html`: Build just the HTML version of the book.
+
+You can combine targets:
+
+```
+./build docx pdf
+```
+
+### Gotchas
+
+But that doesn't _always_ work as expected. For instance, from traditional
+_make_(1) usage, you might expect `build clean pdf` to run the "clean" target,
+_then_ run the "pdf" target. Instead, it _just_ runs the "clean" operation for
+the PDF. (That's a [doit][] quirk.)
+
 [citations section]: http://pandoc.org/MANUAL.html#extension-citations
 [Pandoc User's Guide]: http://pandoc.org/MANUAL.html
+[doit]: http://pydoit.org/
