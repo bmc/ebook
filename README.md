@@ -49,13 +49,13 @@ Then, install the required software and update the configuration files.
 
 1. Install [pandoc](http://pandoc.org/installing.html).
 2. Install a TexLive distribution, to generate the PDF. 
-    * On the Mac, use [MacTex](https://www.tug.org/mactex/mactex-download.html),
+    * On Mac OS, use [MacTex](https://www.tug.org/mactex/mactex-download.html),
       and ensure that `/Library/TeX/texbin` is in your path.
     * On Ubuntu/Debian, install `texlive`, `texlive-latex-recommended` and
       `texlive-latex-extras`.
     * On Windows, this might work: <https://www.tug.org/texlive/windows.html>.
 3. Install a Python distribution, version 3.6 or better.
-    * On the Mac, `brew install python3` will suffice.
+    * On Mac OS, `brew install python3` will suffice.
     * On Ubuntu/Debian,
       [this article](https://unix.stackexchange.com/questions/332641/how-to-install-python-3-6)
       might help.
@@ -90,9 +90,11 @@ with some additional fields used by this build tooling.
 
 The following elements are _required_.
 
-- `title`: The book title
+- `title` (**Required**): The book title.
 
-- `author`: A YAML list of authors. If there is only one author, use a 
+- `subtitle` (**Optional**): Subtitle, if any.
+
+- `author` (**Required**): A YAML list of authors. If there is only one author, use a 
   single-element YAML list. For example:
   
 ```yaml
@@ -106,24 +108,72 @@ author:
 - Frances Horrid
 ```
 
-- `copyright`: A block with two required fields, `owner` and `year`. See the
-  existing sample `metadata.yaml` for an example.
+- `copyright` (**Required**): A block with two required fields, `owner` and
+  `year`. See the existing sample `metadata.yaml` for an example.
   
-- `publisher`: The publisher of the book.
+- `publisher` (**Required**): The publisher of the book.
 
-uses the information in this file to create some of the content for your book.
+- `language` (**Required**): The language in which the book is written. The
+  value can be a 2-letter [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639) 
+  code, such as "en" or "fr". It can also be a 2-part string consisting
+  of the ISO 639-1 language code and the 2-letter
+  [ISO 3166](https://docs.oracle.com/cd/E13214_01/wli/docs92/xref/xqisocodes.html)
+  country code, such as "en-US", "en-UK", "fr-CA", "fr-FR", etc.
 
-3. Edit the `book/copyright-template.md` file. You can leave `@YEAR@` and
-   `@OWNER@` alone; the build tool replaces those with `COPYRIGHT_OWNER`
-   and `COPYRIGHT_YEAR` (defined in `metadata.py`), respectively.
-   See [Markup Notes](#markup-notes) for details on extensions to normal
-   Markdown.
+- `genre` (**Required**): The book's genre. See
+  <https://wiki.mobileread.com/wiki/Genre> for a list of genres.
+
+#### Edit the copyright information.
+
+Edit the `book/copyright.md` file. You can leave `%` tokens in there; they'll
+be substituted as described, below, in [Additional Markup](#additional-markup).
+The meaning of the `{<}` is also explained in that section.
+
+#### Bibliographic references
+
+If you're writing a book that needs a bibliography _and_ uses citations in
+the text, there's a bit of extra work.
+
+First, install [`pandoc-citeproc`](https://github.com/jgm/pandoc-citeproc).
+
+* On Mac OS, use `brew install pandoc-citeproc`.
+* On Ubuntu/Debian, it should have been installed when you installed `pandoc`.
+* On Windows, it should have been installed when you installed `pandoc`.
+
+Next, you'll need to create the bibliography YAML file,
+`book/references.yaml`, suitably organized for `pandoc` to consume. The sample
+`book/references.yaml` contains a single entry. You can hand-code this file,
+or you can use `pandoc-citeproc` to generate it from an existing bibliographic
+file (e.g., a BibTeX file).
+
+See the [citations section]()
+in the Pandoc User's Guide and the
+[`pandoc-citeproc` man page](https://github.com/jgm/pandoc-citeproc/blob/master/man/pandoc-citeproc.1.md)
+for more details.
+
+**NOTE**: The presence of a `book/references.yaml` file triggers the build
+tooling to include a **References** chapter, to which `pandoc` will add any
+cited works. Your bibliography (`book/references.yaml`) can contain as many
+references as you want; only the ones you actually cite in your text will show
+up in the References section. If your text contains no citations, the
+References section will be empty. The build tooling does _not_ check first to
+see whether you actually have any citations in your text.
+
+An example of a citation is:
+
+```
+[See @WatsonCrick1953]
+```
+
+Again, see the [citations section][] of the [Pandoc User's Guide][] for
+full details.
+
 
 ## Markup Notes
 
 Your book will use Markdown, as interpreted by Pandoc. The following Pandoc
 extensions are enabled. See the
-[Pandoc User's Guide](http://pandoc.org/MANUAL.html) for full details.
+[Pandoc User's Guide][] for full details.
 
 * `line_blocks`: Use vertical bars to create lines that are formatted as is.
   See <http://pandoc.org/MANUAL.html#line-blocks> for details.
@@ -239,3 +289,6 @@ To clean _everything_ out (except `doit-db.json`, which won't go away):
 ```
 ./build clobber
 ```
+
+[citations section]: http://pandoc.org/MANUAL.html#extension-citations
+[Pandoc User's Guide]: http://pandoc.org/MANUAL.html
