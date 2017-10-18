@@ -21,20 +21,20 @@ pointless and utterly useless) eBook right away.
   HTML and ePub style sheets are there, as are LaTeX templates (used for PDF
   output) and a Microsoft Word style reference document. You shouldn't need to
   touch anything in `files`.
-  
+
 * The `scripts` subdirectory currently just contains a Pandoc filter used to
   provide [enhanced markup](#additional-markup). You shouldn't need to touch
   anything in `scripts`.
-  
+
 * The `lib` directory contains some additional Python code used by the build.
   Ignore it.
 
 * Your book output files (`book.docx`, `book.epub`, `book.pdf` and
   `book.html`) are generated in the topmost directory.
-  
+
 * The build will also generate a subdirectory called `tmp` to hold some
   temporary files. Git is configured to ignore that directory.
-  
+
 
 ## Getting Started
 
@@ -75,7 +75,7 @@ you're more or less on your own.
 
 1. In your `book` directory, create a cover image, as a PNG. If you haven't
    settled on a cover image yet, you can use the dummy image that's already
-   there.
+   there. **Currently, the cover image is not optional.**
 2. Edit `book/metadata.py`, and fill in the relevant pieces. The build script
    uses the information in this file to create some of the content for your
    book.
@@ -128,7 +128,7 @@ subdirectory and to adhere to the following conventions:
 * If the book has a prologue, put it in file `prologue.md`. It'll appear
   before the first chapter. If you don't want a prologue, simply delete the
   provided `prologue.md`.
-  
+
 * Keep each chapter in a separate file. (This is easier for editing, source
   control, etc.) Name the files `chapter-NN.md`. For instance,
   `chapter-01.md`, `chapter-02.md`, etc. The chapter files are sorted
@@ -137,11 +137,11 @@ subdirectory and to adhere to the following conventions:
   another leading zero (e.g., `chapter-001.md`). If you _must_ put the entire
   content in one file, the file's name must start with `chapter-` and end in
   `.md`.
-  
+ 
 * If the book has an epilogue, put it in file `epilogue.md`. It'll follow the
   last chapter. If you don't want an epilogue, simply delete the provided
   `epilogue.md`.
-  
+
 * If you create a file called `acknowledgments.md`, it'll be placed after the
   epilogue. If you don't want an acknowledgements chapter, simply delete the
   provided `acknowledgments.md`.
