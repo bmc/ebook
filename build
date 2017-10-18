@@ -47,6 +47,11 @@ def maybe_file(f):
     else:
         return []
 
+if os.path.isabs(COVER_IMAGE):
+    COVER_IMAGE_PATH = COVER_IMAGE
+else:
+    COVER_IMAGE_PATH = os.path.join(BOOK_SRC, COVER_IMAGE)
+
 CHAPTERS           = glob(f'{BOOK_SRC}/chapter-*.md')
 COPYRIGHT_TEMPLATE = f'{BOOK_SRC}/copyright-template.md'
 INPUT_FILE_LIST    = ([COPYRIGHT] +
@@ -65,7 +70,7 @@ PANDOC_FILTER      = "scripts/pandoc-filter.py"
 
 # Lists of dependencies, for ease of reference.
 DEPS       = INPUT_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, METADATA]
-EPUB_DEPS  = DEPS + [COVER_IMAGE, EPUB_METADATA, EPUB_CSS, TITLE_TXT]
+EPUB_DEPS  = DEPS + [COVER_IMAGE_PATH, EPUB_METADATA, EPUB_CSS, TITLE_TXT]
 HTML_DEPS  = DEPS + [HTML_CSS, TITLE_TXT]
 PDF_DEPS   = DEPS + [LATEX_HEADER, LATEX_TITLE]
 LATEX_DEPS = DEPS + [LATEX_HEADER, LATEX_TITLE, LATEX_TEMPLATE]
@@ -206,7 +211,7 @@ def task_epub():
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t epub " +
                f"--epub-stylesheet={EPUB_CSS} "
                f"--epub-metadata={EPUB_METADATA} "
-               f"--epub-cover-image={COVER_IMAGE} {TITLE_TXT} {md}")
+               f"--epub-cover-image={COVER_IMAGE_PATH} {TITLE_TXT} {md}")
 
     return {
         'actions': [run],
@@ -287,7 +292,7 @@ def task_latex_title():
         with target_dir_for(LATEX_TITLE):
             with open(LATEX_TITLE, 'w') as out:
                 out.write(r'\begin{titlepage}' + "\n")
-                out.write(r'\includegraphics{' + COVER_IMAGE + "}\n")
+                out.write(r'\includegraphics{' + COVER_IMAGE_PATH + "}\n")
                 out.write(r'\end{titlepage}' + "\n")
 
     return {
