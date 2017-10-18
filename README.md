@@ -193,7 +193,7 @@ To clean up the built targets:
 ./build clean
 ```
 
-To clean _everything_ out (exception `doit-db.json`, which won't go away):
+To clean _everything_ out (except `doit-db.json`, which won't go away):
 
 ```
 ./build clobber
