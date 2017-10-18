@@ -55,7 +55,7 @@ def has_references(metadata, references_path):
 
 def validate_metadata(dict_like):
     for key in ('title', 'author', 'copyright.owner', 'copyright.year',
-                'publisher', 'language'):
+                'publisher', 'language', 'genre'):
         # Drill through composite keys.
         keys = key.split('.') if '.' in key else [key]
         d = dict_like
