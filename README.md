@@ -176,6 +176,14 @@ subdirectory and to adhere to the following conventions:
   copyright page in the generated output. See `dedication.md` for an example.
   If you don't want a dedication, simply delete the provided `dedication.md`.
 
+* If your book has a foreward, just create file `foreward.md`, and it'll
+  be inserted right after the dedication. Otherwise, just delete the supplied
+  sample `foreward.md`.
+
+* If your book has a preface, just create file `preface.md`, and it'll
+  be inserted right after the foreward. Otherwise, just delete the supplied
+  sample `preface.md`.
+
 * If the book has a prologue, put it in file `prologue.md`. It'll appear
   before the first chapter. If you don't want a prologue, simply delete the
   provided `prologue.md`.
@@ -197,9 +205,38 @@ subdirectory and to adhere to the following conventions:
   epilogue. If you don't want an acknowledgements chapter, simply delete the
   provided `acknowledgments.md`.
 
+* If you need one or more appendices, just create files that start with
+  `appendix-` and end with `.md`. Note that the files are sorted lexically.
+  There are sample appendix files in `book`; delete them if you don't want
+  any appendices.
+
+* If you plan to provide a glossary, create `glossary.md`. If you don't need
+  a glossary, delete the provided sample file.
+
 * If you need a references (bibliography) section, create `references.yaml`,
   as described below. If you don't need a bibliography section, just delete
   the provided sample `references.yaml`.
+  
+**NOTE**: There's currently no support for generating an index.
+
+### Summary of chapter ordering
+
+* title page
+* dedication (if present)
+* foreward (if present)
+* preface (if present)
+* prologue (if present)
+* all chapters
+* epilogue (if present)
+* acknowledgments (if present)
+* appendices (if present)
+* glossary (if present)
+* references (if present)
+
+### Table of contents
+
+A table of contents is currently generated for PDF output only. The table
+of contents generation is unreliable for ePub, HTML and DocX.
   
 ### Bibliographic references
 

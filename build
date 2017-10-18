@@ -41,6 +41,7 @@ COMBINED_METADATA  = f'{TMP_DIR}/metadata.yaml'
 
 EPUB_METADATA_TEMPLATE = f'{FILES_DIR}/epub-metadata.xml'
 
+LATEX_METADATA_YAML= f'{FILES_DIR}/latex-metadata.yaml'
 REFERENCES_YAML    = f'{BOOK_SRC_DIR}/references.yaml'
 REFERENCES         = f'{FILES_DIR}/references.md'
 METADATA_YAML      = f'{BOOK_SRC_DIR}/metadata.yaml'
@@ -52,14 +53,19 @@ COVER_IMAGE        = f'{BOOK_SRC_DIR}/cover.png'
 CHAPTERS           = glob(f'{BOOK_SRC_DIR}/chapter-*.md')
 COPYRIGHT          = f'{BOOK_SRC_DIR}/copyright.md'
 LATEX_HEADER       = f'{FILES_DIR}/header.latex'
+APPENDICES         = glob(f'{BOOK_SRC_DIR}/appendix-*.md')
 
 BOOK_FILE_LIST    = (
     [COMBINED_METADATA, COPYRIGHT] +
     maybe_file(f'{BOOK_SRC_DIR}/dedication.md') +
+    maybe_file(f'{BOOK_SRC_DIR}/foreward.md') +
+    maybe_file(f'{BOOK_SRC_DIR}/preface.md') +
     maybe_file(f'{BOOK_SRC_DIR}/prologue.md') +
     CHAPTERS +
     maybe_file(f'{BOOK_SRC_DIR}/epilogue.md') +
     maybe_file(f'{BOOK_SRC_DIR}/acknowledgments.md') +
+    APPENDICES +
+    maybe_file(f'{BOOK_SRC_DIR}/glossary.md') +
     ([REFERENCES] if uses_references else [])
 )
 
@@ -70,11 +76,14 @@ REF_DOCX           = f'{FILES_DIR}/custom-reference.docx'
 PANDOC_FILTER      = 'scripts/pandoc-filter.py'
 
 # Lists of dependencies, for ease of reference.
-DEPS       = BOOK_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, COMBINED_METADATA]
-EPUB_DEPS  = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
-HTML_DEPS  = DEPS + [HTML_CSS]
-LATEX_DEPS = DEPS + [COVER_IMAGE, LATEX_COVER_PAGE, LATEX_TEMPLATE, LATEX_HEADER]
-DOCX_DEPS  = DEPS + [REF_DOCX]
+METADATA_DEPS = ([METADATA_YAML, LATEX_METADATA_YAML] +
+                 [REFERENCES_YAML] if uses_references else [])
+DEPS          = BOOK_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, COMBINED_METADATA]
+EPUB_DEPS     = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
+HTML_DEPS     = DEPS + [HTML_CSS]
+LATEX_DEPS    = DEPS + [COVER_IMAGE, LATEX_COVER_PAGE, LATEX_TEMPLATE,
+                        LATEX_HEADER, LATEX_METADATA_YAML]
+DOCX_DEPS     = DEPS + [REF_DOCX]
 
 # +RTS and -RTS delimit Haskell runtime options. See
 # http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/runtime-control.html
@@ -91,7 +100,9 @@ COMMON_PANDOC_OPTS = (
 )
 NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} --top-level-division=chapter"
 LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
-                     f"-t latex -H {LATEX_HEADER} {LATEX_COVER_PAGE}")
+                     f"-t latex -H {LATEX_HEADER} -B {LATEX_COVER_PAGE} --toc")
+EPUB_PANDOC_OPTS = ''
+DOCX_PANDOC_OPTS = ''
 
 # ---------------------------------------------------------------------------
 # Tasks
@@ -195,8 +206,8 @@ def task_docx():
     '''
     def run(targets):
         with preprocess_markdown(*BOOK_FILE_LIST) as md:
-            sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t docx " +
-               f"--reference-docx={REF_DOCX} {md}")
+            sh(f"pandoc {NON_LATEX_PANDOC_OPTS} {DOCX_PANDOC_OPTS} " +
+               f"-o {targets[0]} -t docx --reference-docx={REF_DOCX} {md}")
 
     return {
         'actions': [run],
@@ -211,7 +222,8 @@ def task_epub():
     '''
     def run(targets):
         with preprocess_markdown(*BOOK_FILE_LIST) as md:
-            sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t epub " +
+            sh(f"pandoc {NON_LATEX_PANDOC_OPTS} {EPUB_PANDOC_OPTS} " +
+               f"-o {targets[0]} -t epub " +
                f"--epub-stylesheet={EPUB_CSS} "
                f"--epub-metadata={EPUB_METADATA} "
                f"--epub-cover-image={COVER_IMAGE} {md}")
@@ -249,8 +261,8 @@ def task_combined_metadata():
     '''
     def run(targets):
         with open(targets[0], 'w') as out:
-            for f in (METADATA_YAML, REFERENCES_YAML):
-                out.write('---\n')
+            out.write('---\n')
+            for f in METADATA_DEPS:
                 if not os.path.exists(f):
                     continue
                 with open(f, 'r') as y:
@@ -259,11 +271,11 @@ def task_combined_metadata():
                         if line.startswith('---'):
                             continue
                         out.write(line)
-                out.write('---\n')
+            out.write('---\n')
 
     return {
         'actions':  [run],
-        'file_dep': [BUILD_FILE, METADATA_YAML, REFERENCES_YAML],
+        'file_dep': [BUILD_FILE] + METADATA_DEPS,
         'targets':  [COMBINED_METADATA],
         'clean':    True
     }
