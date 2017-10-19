@@ -4,6 +4,12 @@
 * ePub is now ePub v3, not ePub v2.
 * Added build logic to allow overriding HTML and/or ePub styling by creating
   `book/html.css` and/or `book/epub.css`.
+* Ensured that generated ePub passes
+  [EpubCheck](https://github.com/IDPF/epubcheck) with no errors.
+* Fixed ePub CSS file to be proper CSS.
+* Corrected generation of ePub metadata so that a lack of a book identifier
+  doesn't generate an empty `<dc:identifier>` element. Necessary to pass
+  EpubCheck validation.
 
 **Version 0.3.0**
 
