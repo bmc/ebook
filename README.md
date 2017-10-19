@@ -320,7 +320,7 @@ as a decent starting point for creating a Kindle version, via
 [Kindle Create](https://kdp.amazon.com/en_US/help/topic/G202131100).
 
 `./build` is a Python script using the Python [doit](http://pydoit.org/)
-build tool. You should not need to edit it; editing `metadata.py` is
+build tool. You should not need to edit it; editing `metadata.yaml` is
 sufficient to specify the information about your book.
 
 ### Auto-building
