@@ -353,6 +353,7 @@ def task_epub_metadata():
     Generate the ePub metadata file.
     '''
     def run(targets):
+        import io
         with open(targets[0], 'w') as out:
             with open(EPUB_METADATA_TEMPLATE, 'r') as input:
                 template = ''.join(input.readlines())
@@ -369,11 +370,15 @@ def task_epub_metadata():
                 'language':          metadata.get('language', 'en-US'),
                 'genre':             metadata.get('genre', '')
             }
-            out.write(Template(template).substitute(data))
+            sbuf = io.StringIO(Template(template).substitute(data))
+            for line in sbuf.readlines():
+                if not identifier and line.strip().startswith('<dc:identifier'):
+                    continue
+                out.write(line)
 
     return {
         'actions':  [run],
-        'file_dep': [EPUB_METADATA_TEMPLATE, BUILD_FILE],
+        'file_dep': [EPUB_METADATA_TEMPLATE, BUILD_FILE, COMBINED_METADATA],
         'targets':  [EPUB_METADATA],
         'clean':    True
     }
