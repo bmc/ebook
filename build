@@ -38,6 +38,7 @@ OUTPUT_LATEX       = f'{OUTPUT_BASENAME}.latex'
 OUTPUT_JSON        = f'{OUTPUT_BASENAME}.json'
 
 COMBINED_METADATA  = f'{TMP_DIR}/metadata.yaml'
+HTML_COVER_IMAGE   = f'{TMP_DIR}/cover.html'
 
 # Input files
 
@@ -84,7 +85,7 @@ METADATA_DEPS = (
 )
 DEPS          = BOOK_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, COMBINED_METADATA]
 EPUB_DEPS     = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
-HTML_DEPS     = DEPS + [HTML_CSS]
+HTML_DEPS     = DEPS + [HTML_CSS, HTML_COVER_IMAGE]
 LATEX_DEPS    = DEPS + [COVER_IMAGE, LATEX_COVER_PAGE, LATEX_TEMPLATE,
                         LATEX_HEADER, LATEX_METADATA_YAML]
 DOCX_DEPS     = DEPS + [REF_DOCX]
@@ -172,13 +173,37 @@ def task_html():
     def run(targets):
         with preprocess_markdown(*BOOK_FILE_LIST) as md:
             sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t html " +
-               f"--self-contained --css={HTML_CSS} {md}")
+               f"-B {HTML_COVER_IMAGE} --self-contained --css={HTML_CSS} {md}")
 
     return {
         'actions': [run],
         'file_dep': HTML_DEPS,
         'targets': [OUTPUT_HTML],
         'clean':   True
+    }
+
+def task_html_cover():
+    '''
+    Generate the HTML embedded cover image.
+    '''
+    def run(targets):
+        import base64
+        with target_dir_for(HTML_COVER_IMAGE):
+            with open(HTML_COVER_IMAGE, 'w') as out:
+                with open(COVER_IMAGE, 'rb') as img:
+                    image_bytes = img.read()
+
+                b64_bytes = base64.encodebytes(image_bytes)
+                b64_str = ''.join(chr(b) for b in b64_bytes).replace('\n', '')
+                out.write('<div id="cover-image">\n')
+                out.write(f'<img src="data:image/png;base64,{b64_str}"/>\n')
+                out.write('</div>\n')
+
+    return {
+        'actions':  [run],
+        'file_dep': [BUILD_FILE, COVER_IMAGE],
+        'targets':  [HTML_COVER_IMAGE],
+        'clean':    True
     }
 
 

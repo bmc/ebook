@@ -76,7 +76,6 @@ def target_dir_for(file):
 
 @contextmanager
 def preprocess_markdown(*files):
-    msg(f"Preprocessing: {files}")
     temp = '_temp.md'
     file_without_dashes = re.compile(r'^[^a-z]*([a-z]+).*$')
 

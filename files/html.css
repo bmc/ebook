@@ -58,6 +58,19 @@ h2.author {
   padding-bottom: 2em;
 }
 
+div#cover-image {
+  width: 100%;
+  margin-bottom: 3em;
+  padding-bottom: 3em;
+  border-bottom: 1px solid #aaa;
+}
+
+div#cover-image img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /**
  * End of additions by bmc@clapper.org
  */

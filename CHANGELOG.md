@@ -7,6 +7,7 @@
 * Added more substitution tokens.
 * Added `version` target to `build`.
 * Added an upgrade script, to help with upgrading to new versions.
+* Added code to insert inline cover image in HTML version of the book.
 
 **Version 0.2.0**
 
