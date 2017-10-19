@@ -13,6 +13,7 @@ import sys
 from panflute import *
 import os
 import re
+from itertools import dropwhile, takewhile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from lib import *
@@ -68,26 +69,42 @@ def matches_pattern(elem, regex):
     return regex.match(elem.text) if isinstance(elem, Str) else None
 
 def paragraph_starts_with_child(elem, string):
-    if not type(elem) == Para:
+    if not isinstance(elem, Para):
         return False
-    if len(elem.content) == 0:
+
+    # Skip any LineBreak elements at the beginning.
+    stripped = list(dropwhile(lambda e: isinstance(e, LineBreak), elem.content))
+
+    if len(stripped) == 0:
         return False
-    if matches_text(elem.content[0], string):
+
+    if matches_text(stripped[0], string):
         return True
+
     return False
 
 def paragraph_contains_child(elem, string):
-    return (type(elem) == Para and
+    return (isinstance(elem, Para) and
             any(matches_text(x, string) for x in elem.content))
 
 def is_epub(format):
     return format.startswith('epub')
 
 def justify(elem, format, token, xhtml_class, latex_env, docx_style):
-    children = [e for e in elem.content if not matches_text(e, token)]
+    def drop(child):
+        return isinstance(child, LineBreak) or matches_text(child, token)
+
+    leading_line_skips = list(takewhile(lambda e: isinstance(e, LineBreak),
+                                        elem.content))
+    children = list(dropwhile(drop, elem.content))
+
     if (format == 'html') or is_epub(format):
-        return Div(Para(*children), attributes={'class': xhtml_class})
+        return Div(Para(*leading_line_skips), Para(*children),
+                   attributes={'class': xhtml_class})
     elif format == 'latex':
+        # Leading line skips cause a problem in LaTeX, when combined with
+        # these environments (at least, the way Pandoc generates the LaTeX).
+        # Don't include them.
         new_children = (
             [RawInline(r'\begin{' + latex_env + '}', 'latex')] +
             children +
@@ -97,10 +114,11 @@ def justify(elem, format, token, xhtml_class, latex_env, docx_style):
         return Para(*new_children)
 
     elif format == 'docx':
-        return Div(Para(*children), attributes={'custom-style': docx_style})
+        return Div(Para(*leading_line_skips), Para(*children),
+                   attributes={'custom-style': docx_style})
 
     else:
-        return Para(*children)
+        return Div(Para(*leading_line_skips), Para(*children))
 
 def left_justify_paragraph(elem, format):
     # Note: The "left" class is defined in epub.css and html.css
@@ -133,7 +151,7 @@ def section_sep(elem, format):
         return elem
 
 def check_for_simple_pattern(elem, doc):
-    assert type(elem) == Str
+    assert isinstance(elem, Str)
     
     for pat, meta_key in SIMPLE_PATTERNS:
         m = matches_pattern(elem, pat)
@@ -159,18 +177,18 @@ def prepare(doc):
 
 def transform(elem, doc):
     data = DataHolder()
-    if type(elem) == Header and elem.level == 1:
+    if isinstance(elem, Header) and elem.level == 1:
+        new_elem = elem
         if len(elem.content) == 0:
             # Special case LaTeX and Word: Replace with new page.
             if doc.format in ['latex', 'docx']:
-                return Div(*newpage(doc.format))
+                new_elem = Div(*newpage(doc.format))
         else:
             # Force page break, if not ePub.
-            if is_epub(doc.format):
-                new_elem = elem
-            else:
+            if not is_epub(doc.format):
                 new_elements = newpage(doc.format) + [elem]
                 new_elem = Div(*new_elements)
+        return new_elem
 
     elif paragraph_contains_child(elem, '%newpage%'):
         abort('%newpage% is no longer supported.')
@@ -200,7 +218,7 @@ def transform(elem, doc):
 
         return Str(f"{m.group(1)}{author_str}{m.group(2)}")
 
-    elif type(elem) == Str:
+    elif isinstance(elem, Str):
         return check_for_simple_pattern(elem, doc)
 
     else:
