@@ -68,10 +68,11 @@ div.line_block {
   margin-right: 5%;
   margin-top: 5%;
   margin-bottom: 5%;
-  p {
-    text-align: justify;
-    text-indent: 0 !important;
-  }
+}
+
+p {
+  text-align: justify;
+  text-indent: 0 !important;
 }
 
 /*
