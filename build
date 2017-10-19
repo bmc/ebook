@@ -115,8 +115,13 @@ NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} "
 LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
                      f"-t latex -H {LATEX_HEADER} -B {LATEX_COVER_PAGE} " +
                      "--toc")
-EPUB_PANDOC_OPTS = ''
-DOCX_PANDOC_OPTS = ''
+HTML_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t html -B {HTML_COVER_IMAGE} ' +
+                    f'--self-contained --css={HTML_CSS}')
+EPUB_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS}  -t epub3 --toc ' +
+                    f'--epub-chapter-level=1 --epub-stylesheet={EPUB_CSS}' +
+                    f'--epub-metadata={EPUB_METADATA} ' +
+                    f'--epub-cover-image={COVER_IMAGE}')
+DOCX_PANDOC_OPTS = f'{NON_LATEX_PANDOC_OPTS} -t docx --reference-docx={REF_DOCX}'
 
 # ---------------------------------------------------------------------------
 # Tasks
@@ -183,9 +188,7 @@ def task_html():
     def run(targets):
         with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST, divs=True) as files:
             files_str = ' '.join(files)
-            sh(f"pandoc {NON_LATEX_PANDOC_OPTS} -o {targets[0]} -t html " +
-               f"-B {HTML_COVER_IMAGE} --self-contained --css={HTML_CSS} " +
-               files_str)
+            sh(f"pandoc {HTML_PANDOC_OPTS} -o {targets[0]} {files_str} ")
 
     return {
         'actions': [run],
@@ -275,9 +278,7 @@ def task_docx():
     def run(targets):
         with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
             files_str = ' '.join(files)
-            sh(f"pandoc {NON_LATEX_PANDOC_OPTS} {DOCX_PANDOC_OPTS} " +
-               f"-o {targets[0]} -t docx --reference-docx={REF_DOCX} " +
-               files_str)
+            sh(f"pandoc {DOCX_PANDOC_OPTS} -o {targets[0]} {files_str}")
 
     return {
         'actions': [run],
@@ -295,11 +296,7 @@ def task_epub():
     def run(targets):
         with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
             files_str = ' '.join(files)
-            sh(f"pandoc {NON_LATEX_PANDOC_OPTS} {EPUB_PANDOC_OPTS} " +
-               f"-o {targets[0]} -t epub3 --epub-chapter-level=1 " +
-               f"--epub-stylesheet={EPUB_CSS} --toc "
-               f"--epub-metadata={EPUB_METADATA} "
-               f"--epub-cover-image={COVER_IMAGE} {files_str}")
+            sh(f'pandoc  {EPUB_PANDOC_OPTS} -o {targets[0]} {files_str}')
             fix_epub(epub=targets[0],
                      book_title=metadata['title'],
                      temp_dir=os.path.join(TMP_DIR, 'book-epub'))

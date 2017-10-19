@@ -23,6 +23,7 @@
   EpubCheck validation.
 * Created a new sample cover image, at a higher resolution. Modified LaTeX
   logic to scale it down properly for PDF.
+* Cleaned build file up a bit.
 
 **Version 0.3.0**
 

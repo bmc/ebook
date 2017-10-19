@@ -179,10 +179,8 @@ The build tool uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
 
 1. Level 1 headings denote new chapters and force a new page.
 2. If you want to force a new page without starting a new chapter, just
-   include a paragraph containing only the line `%newpage%`. The 
-   _entire paragraph_ is replaced with a new page directive (except in HTML),
-   so don't put any extra content in this paragraph. See
-   `book/copyright-template.md` for an example.
+   include an empty level-1 header (`#`). See `book/copyright-template.md` 
+   for an example.
 3. A paragraph containing just the line `+++` is replaced by a centered line
    containing "• • •". This is a useful separator.
 4. A paragraph that starts with `{<}` followed by at least one space is
