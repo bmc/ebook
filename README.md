@@ -393,8 +393,6 @@ ePub is the format used by Apple's iBooks and various free readers, including
 **Issues:**
 
 - There's no table of contents.
-- The cover image is not included in the HTML, because the HTML is a single
-  standalone document.
   
 ### Microsoft Word
 
