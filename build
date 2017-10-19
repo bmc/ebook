@@ -22,6 +22,7 @@ TMP_DIR  = 'tmp'
 FILES_DIR = 'files'
 
 BUILD_FILE = 'build'
+BUILD_LIB  = 'lib/__init__.py'
 
 # Generated files
 
@@ -81,11 +82,13 @@ REF_DOCX           = f'{FILES_DIR}/custom-reference.docx'
 PANDOC_FILTER      = 'scripts/pandoc-filter.py'
 
 # Lists of dependencies, for ease of reference.
+BUILD_FILE_DEPS = [BUILD_FILE, BUILD_LIB]
 METADATA_DEPS = (
     [METADATA_YAML, LATEX_METADATA_YAML] +
     ([REFERENCES_YAML] if uses_references else [])
 )
-DEPS          = BOOK_FILE_LIST + [BUILD_FILE, PANDOC_FILTER, COMBINED_METADATA]
+DEPS          = (BOOK_FILE_LIST + BUILD_FILE_DEPS +
+                 [PANDOC_FILTER, COMBINED_METADATA])
 EPUB_DEPS     = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
 HTML_DEPS     = DEPS + [HTML_CSS, HTML_COVER_IMAGE]
 LATEX_DEPS    = DEPS + [COVER_IMAGE, LATEX_COVER_PAGE, LATEX_TEMPLATE,
@@ -108,7 +111,7 @@ COMMON_PANDOC_OPTS = (
 NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} "
 LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
                      f"-t latex -H {LATEX_HEADER} -B {LATEX_COVER_PAGE} " +
-                     "--top-level-division=chapter --toc")
+                     "--toc")
 EPUB_PANDOC_OPTS = ''
 DOCX_PANDOC_OPTS = ''
 
@@ -207,7 +210,7 @@ def task_html_cover():
 
     return {
         'actions':  [run],
-        'file_dep': [BUILD_FILE, COVER_IMAGE],
+        'file_dep': [COVER_IMAGE] + BUILD_FILE_DEPS,
         'targets':  [HTML_COVER_IMAGE],
         'clean':    True
     }
@@ -284,6 +287,8 @@ def task_epub():
     '''
     Generate ePub output.
     '''
+        
+
     def run(targets):
         with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
             files_str = ' '.join(files)
@@ -292,6 +297,9 @@ def task_epub():
                f"--epub-stylesheet={EPUB_CSS} --toc "
                f"--epub-metadata={EPUB_METADATA} "
                f"--epub-cover-image={COVER_IMAGE} {files_str}")
+            fix_epub(epub=targets[0],
+                     book_title=metadata['title'],
+                     temp_dir=os.path.join(TMP_DIR, 'book-epub'))
 
     return {
         'actions': [run],
@@ -315,7 +323,7 @@ def task_latex_title():
 
     return {
         'actions':  [run],
-        'file_dep': [BUILD_FILE],
+        'file_dep': BUILD_FILE_DEPS,
         'targets':  [LATEX_COVER_PAGE],
         'clean':    True
     }
@@ -343,7 +351,7 @@ def task_combined_metadata():
 
     return {
         'actions':  [run],
-        'file_dep': [BUILD_FILE] + METADATA_DEPS,
+        'file_dep': BUILD_FILE_DEPS + METADATA_DEPS,
         'targets':  [COMBINED_METADATA],
         'clean':    True
     }
@@ -378,7 +386,7 @@ def task_epub_metadata():
 
     return {
         'actions':  [run],
-        'file_dep': [EPUB_METADATA_TEMPLATE, BUILD_FILE, COMBINED_METADATA],
+        'file_dep': [EPUB_METADATA_TEMPLATE, COMBINED_METADATA] + BUILD_FILE_DEPS,
         'targets':  [EPUB_METADATA],
         'clean':    True
     }

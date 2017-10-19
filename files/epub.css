@@ -70,6 +70,16 @@ div.line_block {
   margin-bottom: 5%;
 }
 
+/* Added by the Pandoc filter. Remove this, and you may break %newpage%. */
+h1.pagebreak {
+  page-break-before: always;
+  display: none;
+}
+
+section {
+  page: WordSection1;
+}
+
 p {
   text-align: justify;
   text-indent: 0 !important;

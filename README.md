@@ -12,6 +12,8 @@ command (see [Building your book](#building-your-book)) to build your book.
 There are sample files in this repository, so you can build a (completely
 pointless and utterly useless) eBook right away.
 
+This tooling has been tested with [Pandoc][] version 1.19.2.4.
+
 ## What's where
 
 * Your book's Markdown sources, cover image, and some metadata go in the
@@ -424,6 +426,7 @@ options for generating Kindle content:
   Kindle format.
 
 [citations section]: http://pandoc.org/MANUAL.html#extension-citations
+[Pandoc]: http://pandoc.org
 [Pandoc User's Guide]: http://pandoc.org/MANUAL.html
 [doit]: http://pydoit.org/
 [Calibre]: https://www.calibre-ebook.com/

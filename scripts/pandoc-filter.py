@@ -117,16 +117,6 @@ def right_justify_paragraph(elem, format):
     return justify(elem, format, RIGHT_JUSTIFY, 'right', 'flushright',
                    'JustifyRight')
 
-def newpage(format):
-    if format == 'latex':
-        return [RawBlock(r'\newpage', format)]
-    elif is_epub(format):
-        return [RawBlock(r'<div style="page-break-before:always"></div>')]
-    elif format == 'docx':
-        return [Div(Para(Str('')), attributes={'custom-style': 'NewPage'})]
-    else:
-        return []
-
 def section_sep(elem, format):
     sep = "• • •"
     if (format == 'html') or is_epub(format):
@@ -153,6 +143,16 @@ def check_for_simple_pattern(elem, doc):
 
     return elem
 
+def newpage(format):
+    if format == 'latex':
+        return [RawBlock(r'\newpage', format)]
+    elif is_epub(format):
+        return [RawBlock(r'<p class="pagebreak"></p>')]
+    elif format == 'docx':
+        return [Div(Para(Str('')), attributes={'custom-style': 'NewPage'})]
+    else:
+        return []
+
 def prepare(doc):
     # Validate the metadata
     validate_metadata(doc.get_metadata())
@@ -160,15 +160,20 @@ def prepare(doc):
 def transform(elem, doc):
     data = DataHolder()
     if type(elem) == Header and elem.level == 1:
-        # Force page break, if not ePub.
-        if is_epub(doc.format):
-            return elem
+        if len(elem.content) == 0:
+            # Special case LaTeX and Word: Replace with new page.
+            if doc.format in ['latex', 'docx']:
+                return Div(*newpage(doc.format))
         else:
-            new_elements = newpage(doc.format) + [elem]
-            return Div(*new_elements)
+            # Force page break, if not ePub.
+            if is_epub(doc.format):
+                new_elem = elem
+            else:
+                new_elements = newpage(doc.format) + [elem]
+                new_elem = Div(*new_elements)
 
     elif paragraph_contains_child(elem, '%newpage%'):
-        return Div(*newpage(doc.format))
+        abort('%newpage% is no longer supported.')
 
     elif paragraph_starts_with_child(elem, LEFT_JUSTIFY):
         return left_justify_paragraph(elem, doc.format)

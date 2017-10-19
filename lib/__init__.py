@@ -257,3 +257,161 @@ def rm_f(paths, silent=False):
         from doit import TaskError
         raise TaskError('rm_f() expects a list, a tuple or a string.')
 
+def fix_epub(epub, book_title, temp_dir):
+    '''
+    Make some adjustments to the generated tables of contents in the ePub,
+    removing empty elements and removing items matching the book title.
+
+    Parameters:
+
+    epub:       The path to the epub file
+    book_title: The book title
+    temp_dir:   Temporary directory to use for unpacking
+    '''
+    from zipfile import ZipFile, ZIP_DEFLATED
+    from xml.dom import minidom
+    from grizzled.os import working_directory
+
+    rm_rf(temp_dir, silent=True)
+
+    def zip_add(zf, path, zippath):
+        '''Swiped from zipfile module.'''
+        if os.path.isfile(path):
+            zf.write(path, zippath, ZIP_DEFLATED)
+        elif os.path.isdir(path):
+            if zippath:
+                zf.write(path, zippath)
+            for nm in os.listdir(path):
+                zip_add(zf,
+                        os.path.join(path, nm), os.path.join(zippath, nm))
+
+
+    def unpack_epub():
+        # Assumes pwd is *not* unpack directory.
+        msg(f'.. Unpacking {epub}.')
+        with ZipFile(epub) as z:
+            z.extractall(temp_dir)
+
+    def repack_epub():
+        # Assumes pwd is *not* unpack directory.
+        msg(f'.. Packing new {epub}.')
+        with ZipFile(epub, 'w') as z:
+            with working_directory(temp_dir):
+                for f in os.listdir('.'):
+                    if f in ['..', '.']:
+                        continue
+                    zip_add(z, f, f)
+
+    def strip_text_children(element):
+        for child in element.childNodes:
+            if type(child) == minidom.Text:
+                element.removeChild(child)
+
+    def get_text_children(element):
+        text = None
+        if element:
+            s = ''
+            for child in element.childNodes:
+                if child and (type(child) == minidom.Text):
+                    s += child.data.strip()
+            text = s if s else None
+        return text
+
+    def fix_toc_ncx(toc):
+        # Assumes pwd *is* unpack directory
+        msg(f'.. Reading table of contents file "{toc}".')
+        with open(toc) as f:
+            toc_xml = f.read()
+
+        msg('.. Adjusting table of contents.')
+        with minidom.parse(toc) as dom:
+            nav_map = dom.getElementsByTagName('navMap')
+            if not nav_map:
+                abort('Malformed table of contents: No <navMap>.')
+            nav_map = nav_map[0]
+            for p in nav_map.getElementsByTagName('navPoint'):
+                text_nodes = p.getElementsByTagName('text')
+                text = None
+                if text_nodes:
+                    text = get_text_children(text_nodes[0])
+
+                if (not text) or (text == book_title):
+                    nav_map.removeChild(p)
+
+            # Renumber the nav points.
+            for i, p in enumerate(nav_map.getElementsByTagName('navPoint')):
+                num = i + 1
+                p.setAttribute('id', f'navPoint-{num}')
+
+            # Strip any text nodes from the navmap.
+            strip_text_children(nav_map)
+
+            # Write it out.
+            with open(toc, 'w') as f:
+                dom.writexml(f)
+
+    def fix_nav_xhtml(toc):
+        # Assumes pwd *is* unpack directory
+        msg(f'.. Reading table of contents file "{toc}".')
+        with open(toc) as f:
+            toc_xml = f.read()
+
+        msg('.. Adjusting table of contents.')
+        with minidom.parse(toc) as dom:
+            navs = dom.getElementsByTagName('nav')
+            nav = None
+            for n in navs:
+                if not n.hasAttributes():
+                    continue
+                a = n.attributes.get('id')
+                if not a:
+                    continue
+                if a.value == 'toc':
+                    nav = n
+                    break
+            else:
+                abort('Malformed table of contents: No TOC <nav>.')
+
+            ol = nav.getElementsByTagName('ol')
+            if (not ol) or (len(ol) == 0):
+                abort('Malformed table of contents: No list in <nav>.')
+            ol = ol[0]
+
+            for li in ol.getElementsByTagName('li'):
+                a = li.getElementsByTagName('a')
+                if not a:
+                    abort('Malformed table of contents: No <a> in <li>.')
+                a = a[0]
+                text = get_text_children(a)
+                if (not text) or (text == book_title):
+                    ol.removeChild(li)
+
+            # Renumber the list items
+            for i, li in enumerate(ol.getElementsByTagName('li')):
+                num = i + 1
+                li.setAttribute('id', f'toc-li-{num}')
+
+            # Strip any text nodes from the ol.
+            strip_text_children(ol)
+
+            # Write it out.
+            with open(toc, 'w') as f:
+                dom.writexml(f)
+
+    # Main logic
+    try:
+        unpack_epub()
+        with ensure_dir(temp_dir):
+            with working_directory(temp_dir):
+
+                for toc, func in (('toc.ncx', fix_toc_ncx),
+                                  ('nav.xhtml', fix_nav_xhtml)):
+                    if not os.path.exists(toc):
+                        msg(f'.. No {toc} file. Skipping it.')
+                        continue
+                    func(toc)
+
+        repack_epub()
+    finally:
+        #rmtree(temp_dir)
+        pass

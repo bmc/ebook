@@ -1,6 +1,13 @@
 **Version 0.4.0**
 
-* Fixed table of contents generation with ePub. 
+* Fixed table of contents generation with ePub. This task included (a)
+  removing behavior in the Pandoc filter that short-circuited Pandoc's table
+  of contents logic, and (b) adding some build code to rewrite the table of
+  contents files to remove empty entries and entries that just pointed to
+  title pages.
+* Removed support for `%newpage%`. Just use an empty first-level header ("#")
+  to force a new page; the empty header will be removed from the table of
+  contents. The Pandoc filter will now abort if it sees `%newpage%`.
 * ePub is now ePub v3, not ePub v2.
 * Added build logic to allow overriding HTML and/or ePub styling by creating
   `book/html.css` and/or `book/epub.css`.
