@@ -8,6 +8,16 @@ body {
     font-size: medium;
 }
 
+/*
+  Classic paragraph: First line indented, no vertical space between paragraphs.
+*/
+p {
+  text-indent: +2em;
+  text-align: justify;
+  margin-top: 0;
+  margin-bottom: 0.125pt;
+}
+
 code {
   font-family: monospace;
 }
@@ -78,21 +88,6 @@ h1.pagebreak {
 
 section {
   page: WordSection1;
-}
-
-p {
-  text-align: justify;
-  text-indent: 0 !important;
-}
-
-/*
-  Classic paragraph: First line indented, no vertical space between paragraphs.
-*/
-p {
-  text-indent: +2em;
-  text-align: justify;
-  margin-top: 0;
-  margin-bottom: 0;
 }
 
 div.left p {

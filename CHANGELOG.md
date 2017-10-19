@@ -16,6 +16,8 @@
 * Ensured that generated ePub passes
   [EpubCheck](https://github.com/IDPF/epubcheck) with no errors.
 * Fixed ePub CSS file to be proper CSS.
+* Removed stray styling in ePub CSS that was preventing the correct paragraph
+  style.
 * Corrected generation of ePub metadata so that a lack of a book identifier
   doesn't generate an empty `<dc:identifier>` element. Necessary to pass
   EpubCheck validation.
