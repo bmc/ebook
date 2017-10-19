@@ -1,3 +1,8 @@
+**Version 0.4.0**
+
+* Fixed table of contents generation with ePub. 
+* ePub is now ePub v3, not ePub v2.
+
 **Version 0.3.0**
 
 * Added support for generating a bibiography (references) section, appendices,

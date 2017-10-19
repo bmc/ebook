@@ -260,8 +260,8 @@ subdirectory and to adhere to the following conventions:
 
 ### Table of contents
 
-A table of contents is currently generated for PDF output only. The table
-of contents generation is unreliable for ePub, HTML and DocX.
+A table of contents is currently generated for PDF and ePub output only. The
+table of contents generation is unreliable for HTML and DocX.
   
 ### Bibliographic references
 
@@ -377,10 +377,6 @@ This tooling will generate your book in the following formats:
 
 ePub is the format used by Apple's iBooks and various free readers, including
 [Calibre][].
-
-**Issues:**
-
-- There's no table of contents (yet).
 
 ### PDF
   

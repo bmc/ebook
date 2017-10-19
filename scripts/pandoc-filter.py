@@ -80,9 +80,12 @@ def paragraph_contains_child(elem, string):
     return (type(elem) == Para and
             any(matches_text(x, string) for x in elem.content))
 
+def is_epub(format):
+    return format.startswith('epub')
+
 def justify(elem, format, token, xhtml_class, latex_env, docx_style):
     children = [e for e in elem.content if not matches_text(e, token)]
-    if format in ['html', 'epub']:
+    if (format == 'html') or is_epub(format):
         return Div(Para(*children), attributes={'class': xhtml_class})
     elif format == 'latex':
         new_children = (
@@ -117,7 +120,7 @@ def right_justify_paragraph(elem, format):
 def newpage(format):
     if format == 'latex':
         return [RawBlock(r'\newpage', format)]
-    elif format == 'epub':
+    elif is_epub(format):
         return [RawBlock(r'<div style="page-break-before:always"></div>')]
     elif format == 'docx':
         return [Div(Para(Str('')), attributes={'custom-style': 'NewPage'})]
@@ -126,7 +129,7 @@ def newpage(format):
 
 def section_sep(elem, format):
     sep = "• • •"
-    if format in ['html', 'epub']:
+    if (format == 'html') or is_epub(format):
         return RawBlock(f'<div class="sep">{sep}</div>')
     elif format == 'latex':
         return Para(*[RawInline(r'\bigskip', format),
@@ -157,8 +160,12 @@ def prepare(doc):
 def transform(elem, doc):
     data = DataHolder()
     if type(elem) == Header and elem.level == 1:
-        new_elements = newpage(doc.format) + [elem]
-        return Div(*new_elements)
+        # Don't do this with ePub.
+        if is_epub(doc.format):
+            return elem
+        else:
+            new_elements = newpage(doc.format) + [elem]
+            return Div(*new_elements)
 
     elif paragraph_contains_child(elem, '%newpage%'):
         return Div(*newpage(doc.format))

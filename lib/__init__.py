@@ -105,34 +105,74 @@ def validate_metadata(dict_like):
         if not v:
             abort(f'Missing required "{key}" in metadata.')
 
+def _valid_dir(directory):
+    return (directory not in ('.', '..')) and (len(directory) > 0)
+
 @contextmanager
-def target_dir_for(file):
+def ensure_dir(directory
+               , autoremove=False):
+    '''
+    Run a block in the context of a directory that is created if it doesn't
+    exist.
+
+    Parameters:
+
+    dir:   the directory
+    remove: if True, remove the directory when the "with" block finishes.
+    '''
+    try:
+        if _valid_dir(directory):
+            os.makedirs(directory, exist_ok=True)
+        yield
+    finally:
+        if autoremove:
+            if os.path.exists(directory):
+                rmtree(directory)
+
+@contextmanager
+def target_dir_for(file, autoremove=False):
     '''
     Context manager that ensures that the parent directory of a file exists.
 
     Parameters:
 
-    file: the file
+    file:   the file
+    remove: if True, remove the directory when the "with" block finishes.
     '''
-    dir = os.path.dirname(file)
-    if not (dir == '.' or len(dir) == 0):
-        os.makedirs(dir, exist_ok=True)
-    yield
+    directory = os.path.dirname(file)
+    try:
+        if _valid_dir(directory):
+            os.makedirs(directory, exist_ok=True)
+        yield
+    finally:
+        if autoremove:
+            if os.path.exists(directory):
+                rmtree(directory)
 
 @contextmanager
-def preprocess_markdown(*files):
+def preprocess_markdown(tmp_dir, files, divs=False):
     '''
     Content manager that preprocesses the Markdown files, adding some content
-    and producing a single, unified document.
+    and producing new, individual files.
 
-    Yields the path to the generated document
+    Parameters:
+
+    tmp_dir - the temporary directory for the preprocessed files
+    files   - the list of files to process
+    divs    - True to generate a <div> with a file-based "id" attribute and
+              'class="book_section"' around each Markdown file. Only really 
+              useful for HTML.
+
+    Yields the paths to the generated files
     '''
-    temp = '_temp.md'
     file_without_dashes = re.compile(r'^[^a-z]*([a-z]+).*$')
 
-    try:
-        with open(temp, "w") as t:
-            for f in files:
+    directory = os.path.join(tmp_dir, 'preprocessed')
+    from_to = [(f, os.path.join(directory, os.path.basename(f))) for f in files]
+    generated = [t for f, t in from_to]
+    with ensure_dir(directory, autoremove=False):
+        for f, temp in from_to:
+            with open(temp, "w") as t:
                 basefile, ext = os.path.splitext(os.path.basename(f))
                 m = file_without_dashes.match(basefile)
                 if m:
@@ -141,20 +181,17 @@ def preprocess_markdown(*files):
                     cls = basefile
 
                 # Added classes to each section. Can be used in CSS.
-                if ext == ".md":
-                    t.write(f'<div class="book_section section_{cls}">\n')
+                if divs and ext == ".md":
+                    t.write(f'<div class="book_section" id="section_{cls}">\n')
                 with open(f) as input:
                     for line in input.readlines():
                         t.write(f"{line.rstrip()}\n")
                 # Force a newline after each file.
                 t.write("\n")
-                if ext == ".md":
+                if divs and ext == ".md":
                     t.write('</div>\n')
-
-        yield temp
-    finally:
-        if os.path.exists(temp):
-            os.unlink(temp)
+                t.close()
+        yield generated
 
 def rm_rf(paths, silent=False):
     '''

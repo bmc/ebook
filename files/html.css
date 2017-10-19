@@ -12,7 +12,7 @@ div.book_section {
   margin-top: 3em;
 }
 
-div.section_dedication {
+div#section_dedication {
   border-top: 1px solid #aaa;
   border-bottom: 1px solid #aaa;
   width: 100%;
