@@ -72,8 +72,10 @@ BOOK_FILE_LIST    = (
     ([REFERENCES] if uses_references else [])
 )
 
-HTML_CSS           = f'{FILES_DIR}/html.css'
-EPUB_CSS           = f'{FILES_DIR}/epub.css'
+HTML_CSS           = file_or_default(f'{BOOK_SRC_DIR}/html.css',
+                                     f'{FILES_DIR}/html.css')
+EPUB_CSS           = file_or_default(f'{BOOK_SRC_DIR}/epub.css',
+                                     f'{FILES_DIR}/epub.css')
 LATEX_TEMPLATE     = f'{FILES_DIR}/latex.template'
 REF_DOCX           = f'{FILES_DIR}/custom-reference.docx'
 PANDOC_FILTER      = 'scripts/pandoc-filter.py'

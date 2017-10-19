@@ -26,6 +26,23 @@ def import_from_file(path, module_name):
     sys.modules[module_name] = mod
     return mod
 
+def file_or_default(path, default):
+    '''
+    Return `path` if it exists, or `default` if not.
+
+    Parameters:
+
+    path:    path to file to test
+    default: default file
+    '''
+    if os.path.isfile(path):
+        return path
+
+    if not os.path.isfile(default):
+        abort(f'Default file {default} does not exist or is not a file.')
+
+    return default
+
 def maybe_file(path):
     '''
     Intended to be used when creating a list of files, this function

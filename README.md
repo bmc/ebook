@@ -301,6 +301,17 @@ An example of a citation is:
 Again, see the [citations section][] of the [Pandoc User's Guide][] for
 full details.
 
+## Styling your book
+
+The ePub styling uses `files/epub.css`, and the HTML is styled with
+`files/html.css`.
+
+You can change the styling by providing your own version of those files
+in the `book` directory. That is:
+
+* If `book/html.css` exists, it will be used instead of `files/html.css`.
+* If `book/epub.css` exists, it will be used instead of `files/epub.css`.
+
 ## Building your book
 
 Once you've prepared everything, as described above, you can rebuild the

@@ -2,6 +2,8 @@
 
 * Fixed table of contents generation with ePub. 
 * ePub is now ePub v3, not ePub v2.
+* Added build logic to allow overriding HTML and/or ePub styling by creating
+  `book/html.css` and/or `book/epub.css`.
 
 **Version 0.3.0**
 
