@@ -7,12 +7,12 @@ ePub, PDF, Microsoft Word and HTML form) from Markdown input files.
 
 tl;dr: You write your book as a series of Markdown files, adhering to some
 [file naming conventions](#book-source-file-names), and you run the `./build`
-command (see [Building](#building)) to build your book.
+command (see [Building your book](#building-your-book)) to build your book.
 
 There are sample files in this repository, so you can build a (completely
 pointless and utterly useless) eBook right away.
 
-## What's Where
+## What's where
 
 * Your book's Markdown sources, cover image, and some metadata go in the
   `book` subdirectory. This is where you'll be doing your editing.
@@ -36,7 +36,7 @@ pointless and utterly useless) eBook right away.
   temporary files. Git is configured to ignore that directory.
 
 
-## Getting Started
+## Getting started
 
 Start by downloading and unpacking the latest
 [release](https://github.com/bmc/ebook-template/releases) of this repository.
@@ -70,7 +70,7 @@ Note that this copies files, removing ones that aren't necessary any more.
 If there are metadata changes, however, `upgrade.py` won't apply them.
 Be sure to read the change log for the new release.
 
-### Required Software
+### Required software
 
 1. Install [pandoc](http://pandoc.org/installing.html).
 2. Install a TexLive distribution, to generate the PDF. 
@@ -96,7 +96,7 @@ Be sure to read the change log for the new release.
 never will) test this stuff on Windows. If you insist on using that platform,
 you're more or less on your own.
 
-### Initial Configuration
+### Initial configuration
 
 #### Create your cover image
 
@@ -148,13 +148,13 @@ author:
 - `genre` (**Required**): The book's genre. See
   <https://wiki.mobileread.com/wiki/Genre> for a list of genres.
 
-#### Edit the copyright information.
+#### Edit the copyright information
 
 Edit the `book/copyright.md` file. You can leave `%` tokens in there; they'll
-be substituted as described, below, in [Additional Markup](#additional-markup).
+be substituted as described, below, in [Additional markup](#additional-markup).
 The meaning of the `{<}` is also explained in that section.
 
-## Markup Notes
+## Markup notes
 
 Your book will use Markdown, as interpreted by Pandoc. The following Pandoc
 extensions are enabled. See the
@@ -170,7 +170,7 @@ extensions are enabled. See the
 * `yaml_metadata_block`: Allows metadata in the Markdown. See
   See <http://pandoc.org/MANUAL.html#extension-yaml_metadata_block> for details.
 
-### Additional Markup
+### Additional markup
 
 The build tool uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
 (in `scripts/pandoc-filter.py`) to enrich the Markdown slightly:
@@ -190,7 +190,7 @@ The build tool uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
 6. A paragraph that starts with `{|}` followed by at least one space is
    centered.
 
-## Book Source File Names
+## Book source file names
 
 The tooling expects your book's Markdown sources to be in the `book`
 subdirectory and to adhere to the following conventions:
@@ -300,9 +300,8 @@ An example of a citation is:
 
 Again, see the [citations section][] of the [Pandoc User's Guide][] for
 full details.
-  
 
-## Building
+## Building your book
 
 Once you've prepared everything, as described above, you can rebuild the
 book by running the command:
@@ -311,17 +310,37 @@ book by running the command:
 ./build
 ```
 
-By default, it builds the ePub version (`book.epub`), a PDF version
-(`book.pdf`), an HTML version (`book.html`) and a Microsoft Word version
-(`book.docx`).
-
-Pandoc can't generate books in Kindle format, but the Word version can serve
-as a decent starting point for creating a Kindle version, via
-[Kindle Create](https://kdp.amazon.com/en_US/help/topic/G202131100).
-
 `./build` is a Python script using the Python [doit](http://pydoit.org/)
 build tool. You should not need to edit it; editing `metadata.yaml` is
 sufficient to specify the information about your book.
+
+### Other useful build targets
+
+* `./build version`: Show what version of this tooling you have.
+* `./build docx`: Build just the Microsoft Word version of the book.
+* `./build pdf`: Build just the PDF version of the book.
+* `./build epub`: Build just the ePub version of the book.
+* `./build html`: Build just the HTML version of the book.
+
+You can combine targets:
+
+```
+./build docx pdf
+```
+
+### Cleaning up generated files
+
+To clean up the built targets:
+
+```
+./build clean
+```
+
+To clean _everything_ out (except `doit-db.json`, which won't go away):
+
+```
+./build clobber
+```
 
 ### Auto-building
 
@@ -341,35 +360,6 @@ instance, if you're running in auto-build mode, and you add a new
 `chapter-03.md` file, the build script will _not_ detect it. You'll have to
 kill the auto-build and restart it.
 
-### Cleaning up generated files
-
-To clean up the built targets:
-
-```
-./build clean
-```
-
-To clean _everything_ out (except `doit-db.json`, which won't go away):
-
-```
-./build clobber
-```
-
-
-### Other useful build targets
-
-* `./build version`: Show what version of this tooling you have.
-* `./build docx`: Build just the Microsoft Word version of the book.
-* `./build pdf`: Build just the PDF version of the book.
-* `./build epub`: Build just the ePub version of the book.
-* `./build html`: Build just the HTML version of the book.
-
-You can combine targets:
-
-```
-./build docx pdf
-```
-
 ### Gotchas
 
 But that doesn't _always_ work as expected. For instance, from traditional
@@ -377,6 +367,58 @@ _make_(1) usage, you might expect `build clean pdf` to run the "clean" target,
 _then_ run the "pdf" target. Instead, it _just_ runs the "clean" operation for
 the PDF. (That's a [doit][] quirk.)
 
+## Supported output formats
+
+This tooling will generate your book in the following formats:
+
+### ePub
+
+`book.epub`
+
+ePub is the format used by Apple's iBooks and various free readers, including
+[Calibre][].
+
+**Issues:**
+
+- There's no table of contents (yet).
+
+### PDF
+  
+`book.pdf` is a single PDF document, generated by LaTeX.
+
+### HTML
+
+`book.html` is a single-page HTML, styled in a pleasant format.
+
+**Issues:**
+
+- There's no table of contents.
+- The cover image is not included in the HTML, because the HTML is a single
+  standalone document.
+  
+### Microsoft Word
+
+`book.docx` is a Microsoft Word version of your book.
+
+**Issues:**
+
+- There's no table of contents.
+- The cover image is not included in the Word document.
+
+## Unsupported formats
+
+### Kindle (MOBI)
+
+Pandoc can't generate books in Kindle format. However, there are several
+options for generating Kindle content:
+ 
+- Haul the Microsoft Word version into 
+  [Kindle Create](https://kdp.amazon.com/en_US/help/topic/G202131100)
+
+- Use the free and open source [Calibre][] suite to convert the ePub format to
+  Kindle format.
+
 [citations section]: http://pandoc.org/MANUAL.html#extension-citations
 [Pandoc User's Guide]: http://pandoc.org/MANUAL.html
 [doit]: http://pydoit.org/
+[Calibre]: https://www.calibre-ebook.com/
