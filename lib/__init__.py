@@ -26,34 +26,72 @@ def import_from_file(path, module_name):
     sys.modules[module_name] = mod
     return mod
 
-def maybe_file(f):
-    if os.path.exists(f):
-        return [f]
+def maybe_file(path):
+    '''
+    Intended to be used when creating a list of files, this function
+    determines whether a file exists, returning the file name in a list if
+    so, and returning an empty list if not.
+
+    Parameters:
+
+    path: the path to test
+    '''
+    if os.path.exists(path):
+        return [path]
     else:
         return []
 
-def msg(s):
-    sys.stderr.write(f"{s}\n")
+def msg(message):
+    '''
+    Display a message on standard error. Automatically adds a newline.
+
+    Parameters:
+
+    message: the message to display
+    '''
+    sys.stderr.write(f"{message}\n")
 
 def abort(message):
+    '''
+    Aborts with a message.
+
+    Parameters:
+
+    message: the message
+    '''
     msg(message)
     raise Exception(message)
 
 def sh(command):
+    '''
+    Runs a shell command, exiting if the command fails.
+
+    Parameters:
+
+    command: the command to run
+    '''
     msg(command)
     if os.system(command) != 0:
         sys.exit(1)
 
 def load_metadata(metadata_file):
+    '''
+    Loads a YAML metadata file, returning the loaded dictionary.
+
+    Parameters:
+
+    metadata_file; path to the file to load
+    '''
     with open(metadata_file) as f:
         s = ''.join([s for s in f if not s.startswith('---')])
         metadata = yaml.load(s)
     return metadata
 
-def has_references(metadata, references_path):
-    return ('references' in metadata) and os.path.exists(references_path)
-
 def validate_metadata(dict_like):
+    '''
+    Validates metadata that's been loaded into a dictionary-like object.
+    Throws an exception if a required key is missing.
+    '''
     for key in ('title', 'author', 'copyright.owner', 'copyright.year',
                 'publisher', 'language', 'genre'):
         # Drill through composite keys.
@@ -69,6 +107,13 @@ def validate_metadata(dict_like):
 
 @contextmanager
 def target_dir_for(file):
+    '''
+    Context manager that ensures that the parent directory of a file exists.
+
+    Parameters:
+
+    file: the file
+    '''
     dir = os.path.dirname(file)
     if not (dir == '.' or len(dir) == 0):
         os.makedirs(dir, exist_ok=True)
@@ -76,6 +121,12 @@ def target_dir_for(file):
 
 @contextmanager
 def preprocess_markdown(*files):
+    '''
+    Content manager that preprocesses the Markdown files, adding some content
+    and producing a single, unified document.
+
+    Yields the path to the generated document
+    '''
     temp = '_temp.md'
     file_without_dashes = re.compile(r'^[^a-z]*([a-z]+).*$')
 
