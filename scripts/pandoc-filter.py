@@ -160,7 +160,7 @@ def prepare(doc):
 def transform(elem, doc):
     data = DataHolder()
     if type(elem) == Header and elem.level == 1:
-        # Don't do this with ePub.
+        # Force page break, if not ePub.
         if is_epub(doc.format):
             return elem
         else:
