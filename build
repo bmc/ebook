@@ -349,6 +349,7 @@ def task_combined():
     def run(targets):
         out = targets[0]
         msg(f"Generating {out}.")
+
         with target_dir_for(out):
             with preprocess_markdown(*BOOK_FILE_LIST) as md:
                 copyfile(md, out)

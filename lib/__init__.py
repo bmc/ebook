@@ -91,14 +91,14 @@ def preprocess_markdown(*files):
                     cls = basefile
 
                 # Added classes to each section. Can be used in CSS.
-                if ext is ".md":
+                if ext == ".md":
                     t.write(f'<div class="book_section section_{cls}">\n')
                 with open(f) as input:
                     for line in input.readlines():
                         t.write(f"{line.rstrip()}\n")
                 # Force a newline after each file.
                 t.write("\n")
-                if ext is ".md":
+                if ext == ".md":
                     t.write('</div>\n')
 
         yield temp
