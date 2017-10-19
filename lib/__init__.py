@@ -187,7 +187,7 @@ def preprocess_markdown(tmp_dir, files, divs=False):
     directory = os.path.join(tmp_dir, 'preprocessed')
     from_to = [(f, os.path.join(directory, os.path.basename(f))) for f in files]
     generated = [t for f, t in from_to]
-    with ensure_dir(directory, autoremove=False):
+    with ensure_dir(directory, autoremove=True):
         for f, temp in from_to:
             with open(temp, "w") as t:
                 basefile, ext = os.path.splitext(os.path.basename(f))
