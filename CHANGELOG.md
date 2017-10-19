@@ -5,6 +5,8 @@
   of contents logic, and (b) adding some build code to rewrite the table of
   contents files to remove empty entries and entries that just pointed to
   title pages.
+* Fixed center-, left- and right-justification logic in the filter to work if
+  the paragraph is preceded by forced line breaks.
 * Removed support for `%newpage%`. Just use an empty first-level header ("#")
   to force a new page; the empty header will be removed from the table of
   contents. The Pandoc filter will now abort if it sees `%newpage%`.
@@ -17,6 +19,8 @@
 * Corrected generation of ePub metadata so that a lack of a book identifier
   doesn't generate an empty `<dc:identifier>` element. Necessary to pass
   EpubCheck validation.
+* Created a new sample cover image, at a higher resolution. Modified LaTeX
+  logic to scale it down properly for PDF.
 
 **Version 0.3.0**
 

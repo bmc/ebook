@@ -28,8 +28,8 @@ BUILD_LIB  = 'lib/__init__.py'
 
 OUTPUT_BASENAME    = 'book'
 
-EPUB_METADATA      = f'{TMP_DIR}/epub-metadata.xml'
-LATEX_COVER_PAGE   = f'{TMP_DIR}/latex-title.latex'
+EPUB_METADATA      = os.path.join(TMP_DIR, 'epub-metadata.xml')
+LATEX_COVER_PAGE   = os.path.join(TMP_DIR, 'latex-title.latex')
 
 OUTPUT_HTML        = f'{OUTPUT_BASENAME}.html'
 OUTPUT_PDF         = f'{OUTPUT_BASENAME}.pdf'
@@ -38,47 +38,49 @@ OUTPUT_DOCX        = f'{OUTPUT_BASENAME}.docx'
 OUTPUT_LATEX       = f'{OUTPUT_BASENAME}.latex'
 OUTPUT_JSON        = f'{OUTPUT_BASENAME}.json'
 
-COMBINED_METADATA  = f'{TMP_DIR}/metadata.yaml'
-HTML_COVER_IMAGE   = f'{TMP_DIR}/cover.html'
+COMBINED_METADATA  = os.path.join(TMP_DIR, 'metadata.yaml')
+HTML_COVER_IMAGE   = os.path.join(TMP_DIR, 'cover.html')
 
 # Input files
 
-EPUB_METADATA_TEMPLATE = f'{FILES_DIR}/epub-metadata.xml'
+EPUB_METADATA_TEMPLATE    = os.path.join(FILES_DIR, 'epub-metadata.xml')
 
-LATEX_METADATA_YAML= f'{FILES_DIR}/latex-metadata.yaml'
-REFERENCES_YAML    = f'{BOOK_SRC_DIR}/references.yaml'
-REFERENCES         = f'{FILES_DIR}/references.md'
-METADATA_YAML      = f'{BOOK_SRC_DIR}/metadata.yaml'
+LATEX_COVER_PAGE_TEMPLATE = os.path.join(FILES_DIR, 'cover-page.latex')
+LATEX_METADATA_YAML       = os.path.join(FILES_DIR, 'latex-metadata.yaml')
+REFERENCES_YAML           = os.path.join(BOOK_SRC_DIR, 'references.yaml')
+REFERENCES                = os.path.join(FILES_DIR, 'references.md')
+METADATA_YAML             = os.path.join(BOOK_SRC_DIR, 'metadata.yaml')
 
-metadata           = load_metadata(METADATA_YAML)
-uses_references    = os.path.exists(REFERENCES_YAML)
+metadata                  = load_metadata(METADATA_YAML)
+uses_references           = os.path.exists(REFERENCES_YAML)
 
-COVER_IMAGE        = f'{BOOK_SRC_DIR}/cover.png'
-CHAPTERS           = glob(f'{BOOK_SRC_DIR}/chapter-*.md')
-COPYRIGHT          = f'{BOOK_SRC_DIR}/copyright.md'
-LATEX_HEADER       = f'{FILES_DIR}/header.latex'
-APPENDICES         = glob(f'{BOOK_SRC_DIR}/appendix-*.md')
+COVER_IMAGE               = os.path.join(BOOK_SRC_DIR, 'cover.png')
+COVER_IMAGE_PDF           = os.path.join(BOOK_SRC_DIR, 'cover-pdf.png')
+CHAPTERS                  = glob(os.path.join(BOOK_SRC_DIR, 'chapter-*.md'))
+COPYRIGHT                 = os.path.join(BOOK_SRC_DIR, 'copyright.md')
+LATEX_HEADER              = os.path.join(FILES_DIR, 'header.latex')
+APPENDICES                = glob(os.path.join(BOOK_SRC_DIR, 'appendix-*.md'))
 
 BOOK_FILE_LIST    = (
     [COMBINED_METADATA, COPYRIGHT] +
-    maybe_file(f'{BOOK_SRC_DIR}/dedication.md') +
-    maybe_file(f'{BOOK_SRC_DIR}/foreward.md') +
-    maybe_file(f'{BOOK_SRC_DIR}/preface.md') +
-    maybe_file(f'{BOOK_SRC_DIR}/prologue.md') +
+    maybe_file(os.path.join(BOOK_SRC_DIR, 'dedication.md')) +
+    maybe_file(os.path.join(BOOK_SRC_DIR, 'foreward.md')) +
+    maybe_file(os.path.join(BOOK_SRC_DIR, 'preface.md')) +
+    maybe_file(os.path.join(BOOK_SRC_DIR, 'prologue.md')) +
     CHAPTERS +
-    maybe_file(f'{BOOK_SRC_DIR}/epilogue.md') +
-    maybe_file(f'{BOOK_SRC_DIR}/acknowledgments.md') +
+    maybe_file(os.path.join(BOOK_SRC_DIR, 'epilogue.md')) +
+    maybe_file(os.path.join(BOOK_SRC_DIR, 'acknowledgments.md')) +
     APPENDICES +
-    maybe_file(f'{BOOK_SRC_DIR}/glossary.md') +
+    maybe_file(os.path.join(BOOK_SRC_DIR, 'glossary.md')) +
     ([REFERENCES] if uses_references else [])
 )
 
-HTML_CSS           = file_or_default(f'{BOOK_SRC_DIR}/html.css',
-                                     f'{FILES_DIR}/html.css')
-EPUB_CSS           = file_or_default(f'{BOOK_SRC_DIR}/epub.css',
-                                     f'{FILES_DIR}/epub.css')
-LATEX_TEMPLATE     = f'{FILES_DIR}/latex.template'
-REF_DOCX           = f'{FILES_DIR}/custom-reference.docx'
+HTML_CSS           = file_or_default(os.path.join(BOOK_SRC_DIR, 'html.css'),
+                                     os.path.join(FILES_DIR, 'html.css'))
+EPUB_CSS           = file_or_default(os.path.join(BOOK_SRC_DIR, 'epub.css'),
+                                     os.path.join(FILES_DIR, 'epub.css'))
+LATEX_TEMPLATE     = os.path.join(FILES_DIR, 'latex.template')
+REF_DOCX           = os.path.join(FILES_DIR, 'custom-reference.docx')
 PANDOC_FILTER      = 'scripts/pandoc-filter.py'
 
 # Lists of dependencies, for ease of reference.
@@ -87,11 +89,12 @@ METADATA_DEPS = (
     [METADATA_YAML, LATEX_METADATA_YAML] +
     ([REFERENCES_YAML] if uses_references else [])
 )
+
 DEPS          = (BOOK_FILE_LIST + BUILD_FILE_DEPS +
                  [PANDOC_FILTER, COMBINED_METADATA])
 EPUB_DEPS     = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
 HTML_DEPS     = DEPS + [HTML_CSS, HTML_COVER_IMAGE]
-LATEX_DEPS    = DEPS + [COVER_IMAGE, LATEX_COVER_PAGE, LATEX_TEMPLATE,
+LATEX_DEPS    = DEPS + [LATEX_COVER_PAGE, LATEX_TEMPLATE,
                         LATEX_HEADER, LATEX_METADATA_YAML]
 DOCX_DEPS     = DEPS + [REF_DOCX]
 
@@ -316,14 +319,14 @@ def task_latex_title():
     # \usepackage{graphicx} in the preamble.
     def run(targets):
         with target_dir_for(LATEX_COVER_PAGE):
-            with open(LATEX_COVER_PAGE, 'w') as out:
-                out.write(r'\begin{titlepage}' + "\n")
-                out.write(r'\includegraphics{' + COVER_IMAGE + "}\n")
-                out.write(r'\end{titlepage}' + "\n")
+            with open(LATEX_COVER_PAGE_TEMPLATE) as template:
+                with open(LATEX_COVER_PAGE, 'w') as out:
+                    data = {'cover_image': COVER_IMAGE}
+                    out.write(Template(template.read()).substitute(data))
 
     return {
         'actions':  [run],
-        'file_dep': BUILD_FILE_DEPS,
+        'file_dep': BUILD_FILE_DEPS + [LATEX_COVER_PAGE_TEMPLATE, COVER_IMAGE],
         'targets':  [LATEX_COVER_PAGE],
         'clean':    True
     }
@@ -409,7 +412,7 @@ def task_combined():
     return {
         'actions':  [run],
         'file_dep': DEPS,
-        'targets':  [f'{TMP_DIR}/temp.md'],
+        'targets':  [os.path.join(TMP_DIR, 'temp.md')],
         'clean':    True
     }
 
