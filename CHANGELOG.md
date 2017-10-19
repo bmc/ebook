@@ -5,6 +5,8 @@
 * Reworked how the pandoc filter handles token substitution.
 * Moved metadata to a Pandoc-style metadata file.
 * Added more substitution tokens.
+* Added `version` target to `build`.
+* Added an upgrade script, to help with upgrading to new versions.
 
 **Version 0.2.0**
 

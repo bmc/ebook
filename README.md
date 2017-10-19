@@ -45,6 +45,31 @@ easily create your own Git repository from the results.)
 
 Then, install the required software and update the configuration files.
 
+### Upgrading
+
+If you're already using this tooling for one of your books, and you want to
+upgrade to a newer version, the process (currently) is straightforward:
+
+* Download and unpack the new version, as described above. Don't unpack it
+  over your project!
+* Run the new version's `upgrade.py` file from your project's top level
+  directory.
+* Run `./upgrade.py` from within your project, passing it the path to the
+  unpacked new release.
+
+For example:
+
+```
+cd /tmp
+tar xf /path/to/downloaded/ebook-template-X.Y.Z.tgz
+cd /path/to/your/ebook
+/tmp/ebook-template-X.Y.Z/upgrade.py /tmp/ebook-template-X.Y.Z
+```
+
+Note that this copies files, removing ones that aren't necessary any more.
+If there are metadata changes, however, `upgrade.py` won't apply them.
+Be sure to read the change log for the new release.
+
 ### Required Software
 
 1. Install [pandoc](http://pandoc.org/installing.html).
@@ -333,6 +358,7 @@ To clean _everything_ out (except `doit-db.json`, which won't go away):
 
 ### Other useful build targets
 
+* `./build version`: Show what version of this tooling you have.
 * `./build docx`: Build just the Microsoft Word version of the book.
 * `./build pdf`: Build just the PDF version of the book.
 * `./build epub`: Build just the ePub version of the book.
