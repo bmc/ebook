@@ -19,7 +19,7 @@
 """
 Pandoc filter to convert transform special sequences on a per-format basis.
 
-See the README.md file for what's supported.
+See the top-level README.md file for what's supported.
 
 See http://scorreia.com/software/panflute/ and 
 https://github.com/jgm/pandoc/wiki/Pandoc-Filters
@@ -31,8 +31,17 @@ import os
 import re
 from itertools import dropwhile, takewhile
 
+# Need the lib module. Make sure it can be found.
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from lib import *
+
+if sys.version_info < (3,6):
+    print("Must use Python 3.6 or better.")
+    sys.exit(1)
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
 
 LEFT_JUSTIFY = '{<}'
 CENTER_JUSTIFY = '{-}'
@@ -48,13 +57,39 @@ LANGUAGE_PAT = re.compile(r'^(.*)%language%(.*)$')
 
 # Patterns that are simple strings in the metadata.
 SIMPLE_PATTERNS = (
-    (TITLE_PAT, 'title'),
-    (SUBTITLE_PAT, 'subtitle'),
+    (TITLE_PAT,           'title'),
+    (SUBTITLE_PAT,        'subtitle'),
     (COPYRIGHT_OWNER_PAT, 'copyright.owner'),
-    (COPYRIGHT_YEAR_PAT, 'copyright.year'),
-    (PUBLISHER_PAT, 'publisher'),
-    (LANGUAGE_PAT, 'language')
+    (COPYRIGHT_YEAR_PAT,  'copyright.year'),
+    (PUBLISHER_PAT,       'publisher'),
+    (LANGUAGE_PAT,        'language')
 )
+
+XHTML_JUSTIFICATION_CLASSES = {
+    # token           class
+    LEFT_JUSTIFY:     'left',
+    CENTER_JUSTIFY:   'center',
+    RIGHT_JUSTIFY:    'right'
+}
+
+LATEX_JUSTIFICATION_ENVIRONMENTS = {
+    # token           env
+    LEFT_JUSTIFY:     'flushleft',
+    CENTER_JUSTIFY:   'center',
+    RIGHT_JUSTIFY:    'flushright'
+}
+
+DOCX_JUSTIFICATION_STYLES = {
+    # token           env
+    LEFT_JUSTIFY:     'JustifyLeft',
+    CENTER_JUSTIFY:   'Centered',
+    RIGHT_JUSTIFY:    'JustifyRight'
+}
+    
+
+# ---------------------------------------------------------------------------
+# Helper classes
+# ---------------------------------------------------------------------------
 
 class DataHolder:
     '''
@@ -71,20 +106,61 @@ class DataHolder:
     def get(self):
         return self.value
 
-if sys.version_info < (3,6):
-    print("Must use Python 3.6 or better.")
-    sys.exit(1)
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 def debug(msg):
+    '''
+    Dump a debug message to stderr.
+
+    Parameters:
+
+    msg: The message to print
+    '''
     sys.stderr.write(msg + "\n")
 
 def matches_text(elem, text):
+    '''
+    Convenience function to see if an element is a Str element and matches
+    the specified text.
+
+    Parameters:
+
+    elem: The AST element to test
+    text: The string to match against
+
+    Returns: True on match, False otherwise
+    '''
     return isinstance(elem, Str) and elem.text == text
 
 def matches_pattern(elem, regex):
+    '''
+    Convenience function to see if an element is a Str element and matches
+    the specified regular expression.
+
+    Parameters:
+
+    elem:  The AST element to test
+    regex: The compiled regular expression against which to match
+
+    Returns: The re.Match object on match, None otherwise
+    '''
     return regex.match(elem.text) if isinstance(elem, Str) else None
 
 def paragraph_starts_with_child(elem, string):
+    '''
+    Determine whether the first non-line break element in a paragraph is a
+    Str element that matches the specified string. Skips leading LineBreak
+    nodes.
+
+    Parameters:
+
+    elem:   The AST element to test
+    string: The string to match against
+
+    Returns: True on match, False otherwise. Also returns false if the
+    passed AST element is not a Para object.
+    '''
     if not isinstance(elem, Para):
         return False
 
@@ -100,13 +176,49 @@ def paragraph_starts_with_child(elem, string):
     return False
 
 def paragraph_contains_child(elem, string):
+    '''
+    Determine whether the any AST element a paragraph is a Str element that
+    matches the specified string.
+
+    Parameters:
+
+    elem:   The AST element to test
+    string: The string to match against
+
+    Returns: True on match, False otherwise. Also returns false if the
+    passed AST element is not a Para object.
+    '''
     return (isinstance(elem, Para) and
             any(matches_text(x, string) for x in elem.content))
 
 def is_epub(format):
+    '''
+    Convenience function that tests whether the output format is ePub. Useful
+    because Pandoc currently supports two ePub output formats.
+
+    Parameters:
+
+    format: the document output format
+
+    Returns: True if the output format is an ePub format, False otherwise.
+    '''
     return format.startswith('epub')
 
-def justify(elem, format, token, xhtml_class, latex_env, docx_style):
+def justify(elem, format, token):
+    '''
+    Workhorse method to justify an element (left, center, or right).
+    Handles all the hairy logic necessary to get the job done.
+
+    Parameters:
+
+    elem:        the element to be justified
+    format:      the output format
+    token:       the original justification token found in the Markdown, to be
+                 removed from the element's children. Also used to as a look-up
+                 key.
+
+    Returns: the adjusted element
+    '''
     def drop(child):
         return isinstance(child, LineBreak) or matches_text(child, token)
 
@@ -115,12 +227,14 @@ def justify(elem, format, token, xhtml_class, latex_env, docx_style):
     children = list(dropwhile(drop, elem.content))
 
     if (format == 'html') or is_epub(format):
+        xhtml_class = XHTML_JUSTIFICATION_CLASSES[token]
         return Div(Para(*leading_line_skips), Para(*children),
                    attributes={'class': xhtml_class})
     elif format == 'latex':
         # Leading line skips cause a problem in LaTeX, when combined with
         # these environments (at least, the way Pandoc generates the LaTeX).
         # Don't include them.
+        latex_env = LATEX_JUSTIFICATION_ENVIRONMENTS[token]
         new_children = (
             [RawInline(r'\begin{' + latex_env + '}', 'latex')] +
             children +
@@ -130,6 +244,7 @@ def justify(elem, format, token, xhtml_class, latex_env, docx_style):
         return Para(*new_children)
 
     elif format == 'docx':
+        docx_style = DOCX_JUSTIFICATION_STYLES[token]
         return Div(Para(*leading_line_skips), Para(*children),
                    attributes={'custom-style': docx_style})
 
@@ -137,21 +252,55 @@ def justify(elem, format, token, xhtml_class, latex_env, docx_style):
         return Div(Para(*leading_line_skips), Para(*children))
 
 def left_justify_paragraph(elem, format):
-    # Note: The "left" class is defined in epub.css and html.css
-    return justify(elem, format, LEFT_JUSTIFY, 'left', 'flushleft',
-                   'JustifyLeft')
+    '''
+    Left-justify the specified element.
+
+    Parameters:
+
+    elem:   The element
+    format: The output format
+
+    Returns: the possibly updated element
+    '''
+    return justify(elem, format, LEFT_JUSTIFY)
 
 def center_paragraph(elem, format):
-    # Note: The "center" class is defined in epub.css and html.css
-    return justify(elem, format, CENTER_JUSTIFY, 'center', 'center',
-                   'Centered')
+    '''
+    Center the specified element.
+
+    Parameters:
+
+    elem:   The element
+    format: The output format
+
+    Returns: the possibly updated element
+    '''
+    return justify(elem, format, CENTER_JUSTIFY)
 
 def right_justify_paragraph(elem, format):
-    # Note: The "right" class is defined in epub.css and html.css
-    return justify(elem, format, RIGHT_JUSTIFY, 'right', 'flushright',
-                   'JustifyRight')
+    '''
+    Right-justify the specified element.
+
+    Parameters:
+
+    elem:   The element
+    format: The output format
+
+    Returns: the possibly updated element
+    '''
+    return justify(elem, format, RIGHT_JUSTIFY)
 
 def section_sep(elem, format):
+    '''
+    Convert the specified element into a section separator.
+
+    Parameters:
+
+    elem:   The element
+    format: The output format
+
+    Returns: the possibly updated element
+    '''
     sep = "• • •"
     if (format == 'html') or is_epub(format):
         return RawBlock(f'<div class="sep">{sep}</div>')
@@ -166,7 +315,19 @@ def section_sep(elem, format):
     else:
         return elem
 
-def check_for_simple_pattern(elem, doc):
+def substitute_any_metadata(elem, doc):
+    '''
+    Checks a string to determine whether it matches one of the SIMPLE_PATTERNS
+    metadata keys, updating the element by substituting the appropriate 
+    metadata value, if found.
+
+    Parameters:
+
+    elem: the element to check 
+    doc:  the Document object
+
+    Returns: the possibly updated element
+    '''
     assert isinstance(elem, Str)
     
     for pat, meta_key in SIMPLE_PATTERNS:
@@ -178,6 +339,16 @@ def check_for_simple_pattern(elem, doc):
     return elem
 
 def newpage(format):
+    '''
+    Return the appropriate sequence to force a new page, if supported by the
+    output format.
+
+    Parameters:
+
+    format: the output format
+
+    Returns: the sequence of elements to force a new page, or []
+    '''
     if format == 'latex':
         return [RawBlock(r'\newpage', format)]
     elif is_epub(format):
@@ -188,10 +359,27 @@ def newpage(format):
         return []
 
 def prepare(doc):
+    '''
+    Filter initialization.
+
+    Parameters:
+
+    doc: the Document object
+    '''
     # Validate the metadata
     validate_metadata(doc.get_metadata())
 
 def transform(elem, doc):
+    '''
+    The guts of the filter.
+
+    Parameters:
+
+    elem:  An element to process
+    doc:   The Document object
+
+    Returns: the possibly updated element
+    '''
     data = DataHolder()
     if isinstance(elem, Header) and elem.level == 1:
         new_elem = elem
@@ -235,7 +423,7 @@ def transform(elem, doc):
         return Str(f"{m.group(1)}{author_str}{m.group(2)}")
 
     elif isinstance(elem, Str):
-        return check_for_simple_pattern(elem, doc)
+        return substitute_any_metadata(elem, doc)
 
     else:
         return elem
