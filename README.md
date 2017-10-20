@@ -190,6 +190,9 @@ The build tool uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
 6. A paragraph that starts with `{|}` followed by at least one space is
    centered.
 
+(The filter is written in Python, using the
+[Panflute](http://scorreia.com/software/panflute/) package.)
+
 ## Book source file names
 
 The tooling expects your book's Markdown sources to be in the `book`
