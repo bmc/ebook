@@ -1,4 +1,4 @@
-**Version 0.5.0**
+**Version 0.5.0** (status: SNAPSHOT)
 
 * Cleaned up logic in `scripts/pandoc-filter.py`.
 * Added some internal code documentation.
