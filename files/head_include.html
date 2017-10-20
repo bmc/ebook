@@ -1,0 +1,47 @@
+<script type="text/javascript">
+  console.log("book");
+  window.onload = function () {
+    var toc = "";
+    var level = 0;
+
+    var header = document.getElementById("header");
+    if (header) {
+      var chapters = document.getElementsByTagName("h1");
+      var toc = '';
+      for (var i = 0; i < chapters.length; i++) {
+        var e = chapters[i];
+        var attrs = e.attributes;
+        var idAttr = e.attributes.getNamedItem("id");
+        if (! idAttr) continue;
+        var id = idAttr.value;
+        if (! id) continue;
+
+        var text = "";
+        for (var child = e.firstChild; child; child = child.nextSibling) {
+          if (child.nodeType == 3) {
+            var s = child.wholeText;
+            if (! s) continue;
+            s = s.trim();
+            if (s != '') text = text + " " + s;
+          }
+        }
+        text = text.trim();
+        if (text) {
+          toc = toc + '<li><a href="#' + id + '">' + text + '</a></li>\n';
+        }
+      }
+
+      if (toc) {
+        toc = '<h1>Table of Contents</h1>\n<ol id="toc">\n' + toc + "</ol>";
+        var div = document.createElement("div");
+        div.innerHTML = toc;
+        var headerParent = header.parentNode;
+        
+        var insertBefore = header.nextSibling;
+        if (! insertBefore) insertBefore = header;
+        headerParent.insertBefore(div, insertBefore);
+      }
+
+    }
+  }
+</script>

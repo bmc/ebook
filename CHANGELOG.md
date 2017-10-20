@@ -1,5 +1,7 @@
 **Version 0.4.0**
 
+* Added support for a (JavaScript-generated) table of contents in the HTML
+  version of the book.
 * Fixed table of contents generation with ePub. This task included (a)
   removing behavior in the Pandoc filter that short-circuited Pandoc's table
   of contents logic, and (b) adding some build code to rewrite the table of

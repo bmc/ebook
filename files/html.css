@@ -57,6 +57,11 @@ h2.author {
   padding-bottom: 2em;
 }
 
+#toc {
+  padding-bottom: 2em;
+  border-bottom: 1px solid #aaa;
+}
+
 div#cover-image {
   width: 100%;
   margin-bottom: 3em;
