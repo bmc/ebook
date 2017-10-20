@@ -261,11 +261,18 @@ subdirectory and to adhere to the following conventions:
 ### Table of contents
 
 - **PDF**: LaTeX, via Pandoc, generates the table of contents in the PDF.
+
 - **ePub**: Pandoc generates the table of contents as part of the ePub package.
+
 - **HTML**: The build tool includes JavaScript that generates a table
   of contents in the browser.
-- **Word**: The Microsoft Word version of the book currently does not have
-  a table of contents.
+
+- **Word**: Pandoc doesn't generate a table of contents for Microsoft Word,
+  because it's trivial to create your own. In newer versions of Microsoft
+  Word (e.g., the version you get with Office 365):
+    - Insert a page break to create a new, blank page.
+    - Select "References" from the menu bar.
+    - Select "Table of Contents", and select your desired style.
   
 ### Bibliographic references
 
