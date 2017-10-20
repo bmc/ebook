@@ -121,8 +121,8 @@ LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
 HTML_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t html -B {HTML_BODY_INCLUDE} ' +
                     f'--self-contained --css={HTML_CSS} ' +
                     f'-H {HTML_HEAD_INCLUDE}')
-EPUB_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS}  -t epub3 --toc ' +
-                    f'--epub-chapter-level=1 --epub-stylesheet={EPUB_CSS}' +
+EPUB_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t epub3 --toc ' +
+                    f'--epub-chapter-level=1 --epub-stylesheet={EPUB_CSS} ' +
                     f'--epub-metadata={EPUB_METADATA} ' +
                     f'--epub-cover-image={COVER_IMAGE}')
 DOCX_PANDOC_OPTS = f'{NON_LATEX_PANDOC_OPTS} -t docx --reference-docx={REF_DOCX}'
