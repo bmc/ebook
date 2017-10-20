@@ -1,3 +1,9 @@
+**Version 0.5.0**
+
+* Cleaned up logic in `scripts/pandoc-filter.py`.
+* Added some internal code documentation.
+* Changed HTML styling to use traditional book-style paragraph indentation.
+
 **Version 0.4.0**
 
 * Added license terms.
