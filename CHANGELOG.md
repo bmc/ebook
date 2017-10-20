@@ -1,5 +1,6 @@
 **Version 0.4.0**
 
+* Added license terms.
 * Added support for a (JavaScript-generated) table of contents in the HTML
   version of the book.
 * Fixed table of contents generation with ePub. This task included (a)
