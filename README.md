@@ -190,6 +190,10 @@ The build tool uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
 6. A paragraph that starts with `{|}` followed by at least one space is
    centered.
 
+Note, too, that Pandoc automatically converts your quotation marks into
+smart quotes, triple dots (`...`) into an ellipsis, and two dashes (`--`)
+into an em-dash.
+
 (The filter is written in Python, using the
 [Panflute](http://scorreia.com/software/panflute/) package.)
 
