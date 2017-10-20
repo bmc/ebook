@@ -419,8 +419,16 @@ options for generating Kindle content:
 - Use the free and open source [Calibre][] suite to convert the ePub format to
   Kindle format.
 
+## Copyright and License
+
+This software is copyright © 2017 Brian M. Clapper and is released under the
+[GPL, version 3][], similar to the license the underlying [Pandoc][] software
+uses. See the [LICENSE](LICENSE.md) for further details.
+
+[GPL, version 3]: http://www.gnu.org/copyleft/gpl.html
 [citations section]: http://pandoc.org/MANUAL.html#extension-citations
 [Pandoc]: http://pandoc.org
 [Pandoc User's Guide]: http://pandoc.org/MANUAL.html
 [doit]: http://pydoit.org/
 [Calibre]: https://www.calibre-ebook.com/
+
