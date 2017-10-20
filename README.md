@@ -397,10 +397,6 @@ ePub is the format used by Apple's iBooks and various free readers, including
 
 `book.html` is a single-page HTML, styled in a pleasant format.
 
-**Issues:**
-
-- There's no table of contents.
-  
 ### Microsoft Word
 
 `book.docx` is a Microsoft Word version of your book.
