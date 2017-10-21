@@ -19,6 +19,7 @@
 import sys
 from shutil import *
 import os
+import re
 
 def msg(message):
     print(f'{message}')
@@ -61,15 +62,23 @@ def copy_files(path):
     copy(os.path.join(path, 'upgrade.py'), '.')
 
 def upgrade(path):
-    msg('Running: ./build clobber')
-    if os.system('./build clobber') != 0:
-        sys.exit(1)
+    if os.path.exists('./build'):
+        msg('Running: ./build clobber')
+        if os.system('./build clobber') != 0:
+            sys.exit(1)
 
     copy_files(path)
 
-    msg('Upgraded to:')
-    if os.system('./build version') != 0:
-        sys.exit(1)
+    VERSION_PAT = re.compile(r'^\s*VERSION\s*=\s*([^\s]+)$')
+    version = "unknown"
+    with open('./build') as build:
+        for line in build.readlines():
+            m = VERSION_PAT.match(line)
+            if m:
+                version = m.group(1)
+                break
+
+    msg(f'Upgraded to: {version}')
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:

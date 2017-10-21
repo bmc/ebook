@@ -1,8 +1,12 @@
-**Version 0.5.0** (status: SNAPSHOT)
+**Version 0.5.0**
 
+* Added ability to provide an author page (`author.md`).
+* Added build code to find local image references in the book's Markdown
+  sources, treating them as dependencies for the build.
 * Cleaned up logic in `scripts/pandoc-filter.py`.
 * Added some internal code documentation.
 * Changed HTML styling to use traditional book-style paragraph indentation.
+* `upgrade.py` now works even if the target directory is empty.
 
 **Version 0.4.0**
 

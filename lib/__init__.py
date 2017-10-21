@@ -42,6 +42,26 @@ def import_from_file(path, module_name):
     sys.modules[module_name] = mod
     return mod
 
+def find_local_images(markdown_files):
+    from urllib.parse import urlparse
+    IMAGE_PAT = re.compile(r'^\s*!\[.*\]\(([^\)]+)\).*$')
+
+    images = []
+    for f in markdown_files:
+        if not os.path.exists(f):
+            continue
+        with open(f) as md:
+            for line in md.readlines():
+                m = IMAGE_PAT.match(line)
+                if not m:
+                    continue
+                p = urlparse(m.group(1))
+                if p.scheme:
+                    continue
+                images.append(m.group(1))
+
+    return images
+
 def file_or_default(path, default):
     '''
     Return `path` if it exists, or `default` if not.
@@ -115,9 +135,13 @@ def load_metadata(metadata_file):
 
     metadata_file; path to the file to load
     '''
-    with open(metadata_file) as f:
-        s = ''.join([s for s in f if not s.startswith('---')])
-        metadata = yaml.load(s)
+    if os.path.exists(metadata_file):
+        with open(metadata_file) as f:
+            s = ''.join([s for s in f if not s.startswith('---')])
+            metadata = yaml.load(s)
+    else:
+        metadata = {}
+
     return metadata
 
 def validate_metadata(dict_like):

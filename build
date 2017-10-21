@@ -30,7 +30,7 @@ from lib import *
 # Constants
 # ---------------------------------------------------------------------------
 
-VERSION = "0.5.0-SNAPSHOT"
+VERSION = "0.5.0"
 
 BOOK_SRC_DIR = 'book'
 TMP_DIR  = 'tmp'
@@ -90,8 +90,11 @@ BOOK_FILE_LIST    = (
     maybe_file(os.path.join(BOOK_SRC_DIR, 'acknowledgments.md')) +
     APPENDICES +
     maybe_file(os.path.join(BOOK_SRC_DIR, 'glossary.md')) +
+    maybe_file(os.path.join(BOOK_SRC_DIR, 'author.md')) +
     ([REFERENCES] if uses_references else [])
 )
+
+LOCAL_IMAGES       = find_local_images(BOOK_FILE_LIST)
 
 HTML_CSS           = file_or_default(os.path.join(BOOK_SRC_DIR, 'html.css'),
                                      os.path.join(FILES_DIR, 'html.css'))
@@ -108,7 +111,7 @@ METADATA_DEPS = (
     ([REFERENCES_YAML] if uses_references else [])
 )
 
-DEPS          = (BOOK_FILE_LIST + BUILD_FILE_DEPS +
+DEPS          = (BOOK_FILE_LIST + BUILD_FILE_DEPS + LOCAL_IMAGES +
                  [PANDOC_FILTER, COMBINED_METADATA])
 EPUB_DEPS     = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
 HTML_DEPS     = DEPS + [HTML_CSS, HTML_BODY_INCLUDE]

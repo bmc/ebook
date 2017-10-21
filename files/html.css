@@ -73,6 +73,11 @@ h2.author {
   border-bottom: 1px solid #aaa;
 }
 
+div.figure {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
 div#cover-image {
   width: 100%;
   margin-bottom: 3em;

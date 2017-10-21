@@ -245,6 +245,8 @@ subdirectory and to adhere to the following conventions:
 - If you plan to provide a glossary, create `glossary.md`. If you don't need
   a glossary, delete the provided sample file.
 
+- If you want to include an author biography, just create `author.md`.
+
 - If you need a references (bibliography) section, create `references.yaml`,
   as described below. If you don't need a bibliography section, just delete
   the provided sample `references.yaml`.
@@ -263,7 +265,13 @@ subdirectory and to adhere to the following conventions:
 - acknowledgments (if present)
 - appendices (if present)
 - glossary (if present)
+- author (if present)
 - references (if present)
+
+### Images
+
+Image references to files are relative to the _top_ directory, not to the
+`book` directory.
 
 ### Table of contents
 
