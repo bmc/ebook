@@ -12,7 +12,7 @@ command (see [Building your book](#building-your-book)) to build your book.
 There are sample files in this repository, so you can build a (completely
 pointless and utterly useless) eBook right away.
 
-This tooling has been tested with [Pandoc][] version 1.19.2.4.
+This tooling has been tested with [Pandoc][] version 2.0.4.
 
 ## What's where
 
