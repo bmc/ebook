@@ -30,7 +30,7 @@ from lib import *
 # Constants
 # ---------------------------------------------------------------------------
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 
 BOOK_SRC_DIR = 'book'
 TMP_DIR  = 'tmp'
@@ -67,10 +67,12 @@ LATEX_COVER_PAGE_TEMPLATE  = os.path.join(FILES_DIR, 'cover-page.latex')
 LATEX_METADATA_YAML        = os.path.join(FILES_DIR, 'latex-metadata.yaml')
 REFERENCES_YAML            = os.path.join(BOOK_SRC_DIR, 'references.yaml')
 REFERENCES                 = os.path.join(FILES_DIR, 'references.md')
+DEFAULT_METADATA_YAML      = os.path.join(FILES_DIR, 'default-metadata.yaml')
 METADATA_YAML              = os.path.join(BOOK_SRC_DIR, 'metadata.yaml')
 
 metadata                   = load_metadata(METADATA_YAML)
 uses_references            = os.path.exists(REFERENCES_YAML)
+use_weasyprint             = metadata.get('use_weasyprint', False)
 
 COVER_IMAGE                = os.path.join(BOOK_SRC_DIR, 'cover.png')
 COVER_IMAGE_PDF            = os.path.join(BOOK_SRC_DIR, 'cover-pdf.png')
@@ -100,6 +102,9 @@ HTML_CSS           = file_or_default(os.path.join(BOOK_SRC_DIR, 'html.css'),
                                      os.path.join(FILES_DIR, 'html.css'))
 EPUB_CSS           = file_or_default(os.path.join(BOOK_SRC_DIR, 'epub.css'),
                                      os.path.join(FILES_DIR, 'epub.css'))
+# When generating PDF from HTML via weasyprint.
+HTML_PDF_CSS       = file_or_default(os.path.join(BOOK_SRC_DIR, 'html-pdf.css'),
+                                     os.path.join(FILES_DIR, 'html-pdf.css'))
 LATEX_TEMPLATE     = os.path.join(FILES_DIR, 'latex.template')
 REF_DOCX           = os.path.join(FILES_DIR, 'custom-reference.docx')
 PANDOC_FILTER      = 'scripts/pandoc-filter.py'
@@ -107,7 +112,7 @@ PANDOC_FILTER      = 'scripts/pandoc-filter.py'
 # Lists of dependencies, for ease of reference.
 BUILD_FILE_DEPS = [BUILD_FILE, BUILD_LIB]
 METADATA_DEPS = (
-    [METADATA_YAML, LATEX_METADATA_YAML] +
+    [DEFAULT_METADATA_YAML, METADATA_YAML, LATEX_METADATA_YAML] +
     ([REFERENCES_YAML] if uses_references else [])
 )
 
@@ -118,6 +123,7 @@ HTML_DEPS     = DEPS + [HTML_CSS, HTML_BODY_INCLUDE]
 LATEX_DEPS    = DEPS + [LATEX_COVER_PAGE, LATEX_TEMPLATE,
                         LATEX_HEADER, LATEX_METADATA_YAML]
 DOCX_DEPS     = DEPS + [REF_DOCX]
+HTML_PDF_DEPS = DEPS + [HTML_PDF_CSS, HTML_BODY_INCLUDE]
 
 # +RTS and -RTS delimit Haskell runtime options. See
 # http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/runtime-control.html
@@ -127,9 +133,9 @@ DOCX_DEPS     = DEPS + [REF_DOCX]
 
 HASKELL_OPTS = '+RTS -K20m -RTS'
 #HASKELL_OPTS = ''
-INPUT_FORMAT = "markdown+line_blocks+escaped_line_breaks"
+INPUT_FORMAT = "markdown+line_blocks+escaped_line_breaks+smart"
 COMMON_PANDOC_OPTS = (
-    f"-F {PANDOC_FILTER} -s -f {INPUT_FORMAT} --smart {HASKELL_OPTS}" +
+    f"-F {PANDOC_FILTER} -s -f {INPUT_FORMAT} {HASKELL_OPTS}" +
     (" -F pandoc-citeproc" if uses_references else "")
 )
 NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} "
@@ -145,6 +151,10 @@ EPUB_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t epub3 --toc ' +
                     f'--epub-cover-image={COVER_IMAGE}')
 DOCX_PANDOC_OPTS = f'{NON_LATEX_PANDOC_OPTS} -t docx --reference-docx={REF_DOCX}'
 
+HTML_PDF_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t html ' +
+                        f'--css={HTML_PDF_CSS} --pdf-engine=weasyprint ' +
+                        f'-B {HTML_BODY_INCLUDE}')
+
 # ---------------------------------------------------------------------------
 # Tasks
 # ---------------------------------------------------------------------------
@@ -158,9 +168,6 @@ DOIT_CONFIG = {
     'backend': 'json',
     'dep_file': DOIT_DB
 }
-
-def _no_op(targets):
-    pass
 
 def task_version():
     '''
@@ -181,11 +188,6 @@ def task_all():
         'actions':  [_no_op],
         'task_dep': DEFAULT_TASKS
     }
-
-def _latex(target):
-    with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
-        files_str = ' '.join(files)
-        sh(f"pandoc {LATEX_PANDOC_OPTS} -o {target} {files_str}")
 
 def task_clobber():
     '''
@@ -248,12 +250,27 @@ def task_pdf():
     '''
     Generate PDF output.
     '''
-    return {
-        'actions': [(_latex, [OUTPUT_PDF])],
-        'file_dep': LATEX_DEPS,
-        'targets': [OUTPUT_PDF],
-        'clean':   True
-    }
+    def run(targets):
+        with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
+            files_str = ' '.join(files)
+            target = targets[0]
+            sh(f"pandoc {HTML_PDF_PANDOC_OPTS} -o {target} {files_str}")
+
+
+    if use_weasyprint:
+        return {
+            'actions':  [run],
+            'file_dep': HTML_PDF_DEPS,
+            'targets':  [OUTPUT_PDF],
+            'clean':    True,
+        }
+    else:
+        return {
+            'actions': [(_latex, [OUTPUT_PDF])],
+            'file_dep': LATEX_DEPS,
+            'targets': [OUTPUT_PDF],
+            'clean':   True
+        }
 
 def task_latex():
     '''
@@ -314,7 +331,6 @@ def task_epub():
     Generate ePub output.
     '''
 
-
     def run(targets):
         with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
             files_str = ' '.join(files)
@@ -359,16 +375,20 @@ def task_combined_metadata():
         with target_dir_for(target):
             with open(target, 'w') as out:
                 out.write('---\n')
+                data = {}
                 for f in METADATA_DEPS:
                     if not os.path.exists(f):
                         continue
 
-                    with open(f, 'r') as y:
-                        out.write(f'###\n### {f}\n###\n')
-                        for line in y.readlines():
-                            if line.startswith('---'):
-                                continue
-                            out.write(line)
+                    data.update(load_metadata(f))
+
+                # Special cases.
+
+                if not data.get('lang'):
+                    language = data.get('language', 'en-US')
+                    data['lang'] = language.split('-')[0]
+
+                yaml.dump(data, out)
                 out.write('\n...\n')
 
     return {
@@ -437,9 +457,49 @@ def task_combined():
     }
 
 # ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
+def _latex(target):
+    with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
+        files_str = ' '.join(files)
+        sh(f"pandoc {LATEX_PANDOC_OPTS} -o {target} {files_str}")
+
+
+def _no_op(targets):
+    pass
+
+def _check_pandoc():
+    import subprocess
+    with subprocess.Popen(("pandoc", "--version"),
+                          stdout=subprocess.PIPE,
+                          encoding='ascii') as p:
+        stdout, _ = p.communicate()
+
+    version_pat = re.compile(r'^\s*pandoc\s+(\d+\.\d+[\d.]*).*$')
+    version = None
+    for l in stdout.split('\n'):
+        m = version_pat.search(l)
+        if m:
+            version = m.group(1).split('.')
+            break
+
+    if (version is None) or (len(version) < 3):
+        raise Exception('Unable to determine pandoc version.')
+
+    version = [int(v) for v in version]
+    if (version[0] < 2) or (version[2] < 4):
+        raise Exception(
+            'Pandoc version is {0}. Version 2.0.4 or newer is required.'.format(
+                '.'.join([str(i) for i in version])
+            )
+        )
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 if __name__ == '__main__':
     import doit
+    _check_pandoc()
     doit.run(globals())

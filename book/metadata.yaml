@@ -7,6 +7,13 @@ subtitle: "That's the way it goes"
 
 publisher: Horrid Enterprises, Ltd.
 
+use_weasyprint: true
+
+# Set to the language in which the book is written. This is especially
+# useful when generating PDF with weasyprint, because it affects how
+# hyphenation is handled. (When using weasyprint, automatic hyphenation is
+# supported for any language that Pyphen supports.)
+
 # Multiple authors are permitted.
 author:
 - Joe Horrid

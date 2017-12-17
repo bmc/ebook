@@ -1,3 +1,16 @@
+**Version 0.6.0**
+
+* Added ability to create PDF using [Weasy Print][], rather than LaTeX, which
+  can resolve font problems with some printers. [Weasy Print][] must already be
+  installed in your Python 3 environment, and it's not as simple as a
+  `pip install`. See <http://weasyprint.readthedocs.io/en/latest/install.html>
+* Now ensures that generated HTML (including HTML used by Weasy Print) has the
+  book language.
+* Now requires Pandoc 2.0.4 or better (and aborts if this requirement is not
+  met).
+  
+[Weasy Print]: http://weasyprint.org/
+
 **Version 0.5.0**
 
 * Added ability to provide an author page (`author.md`).

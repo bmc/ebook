@@ -75,24 +75,30 @@ Be sure to read the change log for the new release.
 ### Required software
 
 1. Install [pandoc](http://pandoc.org/installing.html).
-2. Install a TexLive distribution, to generate the PDF. 
-    * On Mac OS, use [MacTex](https://www.tug.org/mactex/mactex-download.html),
-      and ensure that `/Library/TeX/texbin` is in your path.
-    * On Ubuntu/Debian, install `texlive`, `texlive-latex-recommended` and
-      `texlive-latex-extras`.
-    * On Windows, this might work: <https://www.tug.org/texlive/windows.html>.
-3. Install a Python distribution, version 3.6 or better.
+2. Install a Python distribution, version 3.6 or better.
     * On Mac OS, `brew install python3` will suffice.
     * On Ubuntu/Debian,
       [this article](https://unix.stackexchange.com/questions/332641/how-to-install-python-3-6)
       might help.
     * On Windows, see <https://www.python.org/downloads/windows/>.
-4. I recommend creating and activating a
+3. I recommend creating and activating a
    [Python virtual environment](https://virtualenv.pypa.io/en/stable/),
    to keep the installed version of Python 3 more or less pristine.
-5. Once you have your Python 3 environment set up (and activated, if you're
+4. Once you have your Python 3 environment set up (and activated, if you're
    using a virtual environment), install the required Python packages with
    `pip install -r requirements.txt`
+5. You can generate PDF via either LaTeX or [Weasy Print][]. There are
+   advantages and disadvantages to each; see [Generating PDF](#generating-pdf),
+   below.
+    a. If you'll be using LaTeX, install a TexLive distribution.
+        * On Mac OS, use [MacTex](https://www.tug.org/mactex/mactex-download.html),
+          and ensure that `/Library/TeX/texbin` is in your path.
+        * On Ubuntu/Debian, install `texlive`, `texlive-latex-recommended` and
+          `texlive-latex-extras`.
+        * On Windows, this might work: <https://www.tug.org/texlive/windows.html>.
+    b. If you'll be using [Weasy Print][], make sure your Python 3 environment
+       is activated, and follow the directions at 
+       <http://weasyprint.readthedocs.io/en/latest/install.html>
 
 **WARNING**: I avoid Windows as much as possible. I do not (and, likely,
 never will) test this stuff on Windows. If you insist on using that platform,
@@ -268,10 +274,19 @@ subdirectory and to adhere to the following conventions:
 - author (if present)
 - references (if present)
 
+### Generating PDF
+
+You can generate PDF via either LaTeX or [Weasy Print][].
+
+| PDF engine  | Advantages | Disadvantages
+| ----------- | ---------- | -------------
+| LaTeX       | rich typesetting, table of contents | LaTeX fonts aren't supported by all printers
+| Weasy Print | good printer font support | no table of contents 
+
 ### Images
 
 Image references to files are relative to the _top_ directory, not to the
-`book` directory.
+`book` directory. It's best to stick with PNG images.
 
 ### Table of contents
 
@@ -463,4 +478,5 @@ uses. See the [LICENSE](LICENSE.md) for further details.
 [Pandoc User's Guide]: http://pandoc.org/MANUAL.html
 [doit]: http://pydoit.org/
 [Calibre]: https://www.calibre-ebook.com/
+[Weasy Print]: http://weasyprint.org
 

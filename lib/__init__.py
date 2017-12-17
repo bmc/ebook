@@ -217,7 +217,7 @@ def preprocess_markdown(tmp_dir, files, divs=False):
     tmp_dir - the temporary directory for the preprocessed files
     files   - the list of files to process
     divs    - True to generate a <div> with a file-based "id" attribute and
-              'class="book_section"' around each Markdown file. Only really 
+              'class="book_section"' around each Markdown file. Only really
               useful for HTML.
 
     Yields the paths to the generated files
@@ -264,7 +264,7 @@ def rm_rf(paths, silent=False):
             rmtree(path)
         else:
             rm_f(path)
-    
+
     if isinstance(paths, list) or isinstance(paths, tuple):
         for f in paths:
             do_rm(f)
