@@ -5,7 +5,7 @@
    HTML5 display definitions
    ========================================================================== */
 
-/** 
+/**
  * Additions by bmc@clapper.org
  */
 div.book_section {
@@ -27,6 +27,11 @@ p {
   margin-bottom: 0;
   margin-left: 1em;
   margin-right: 1em;
+}
+
+img.plantuml {
+    margin-top: 1em;
+    margin-bottom: 1em;
 }
 
 div.left p {

@@ -25,6 +25,19 @@ from shutil import *
 import yaml
 from contextlib import contextmanager
 import re
+from textwrap import TextWrapper
+from glob import glob
+import codecs
+
+try:
+    _columns = int(os.getenv('COLUMNS', '80'))
+except Exception:
+    _columns = 80
+
+_ALERT_PREFIX = '*** '
+_alert_wrapper = TextWrapper(width=_columns - 1,
+                             subsequent_indent=' ' * len(_ALERT_PREFIX))
+
 
 def import_from_file(path, module_name):
     '''
@@ -41,6 +54,7 @@ def import_from_file(path, module_name):
     spec.loader.exec_module(mod)
     sys.modules[module_name] = mod
     return mod
+
 
 def find_local_images(markdown_files):
     from urllib.parse import urlparse
@@ -62,6 +76,7 @@ def find_local_images(markdown_files):
 
     return images
 
+
 def file_or_default(path, default):
     '''
     Return `path` if it exists, or `default` if not.
@@ -79,6 +94,7 @@ def file_or_default(path, default):
 
     return default
 
+
 def maybe_file(path):
     '''
     Intended to be used when creating a list of files, this function
@@ -94,6 +110,17 @@ def maybe_file(path):
     else:
         return []
 
+
+def alert(message):
+    '''
+    Issue an alert message, which is prefixed and word-wrapped.
+
+    :param message:
+    :return:
+    '''
+    sys.stderr.write(_alert_wrapper.fill(f'{_ALERT_PREFIX}{message}') + '\n')
+
+
 def msg(message):
     '''
     Display a message on standard error. Automatically adds a newline.
@@ -102,7 +129,8 @@ def msg(message):
 
     message: the message to display
     '''
-    sys.stderr.write(f"{message}\n")
+    sys.stderr.write(f'{message}\n')
+
 
 def abort(message):
     '''
@@ -115,6 +143,7 @@ def abort(message):
     msg(message)
     raise Exception(message)
 
+
 def sh(command):
     '''
     Runs a shell command, exiting if the command fails.
@@ -126,6 +155,7 @@ def sh(command):
     msg(command)
     if os.system(command) != 0:
         sys.exit(1)
+
 
 def load_metadata(metadata_file):
     '''
@@ -143,6 +173,7 @@ def load_metadata(metadata_file):
         metadata = {}
 
     return metadata
+
 
 def validate_metadata(dict_like):
     '''
@@ -162,8 +193,10 @@ def validate_metadata(dict_like):
         if not v:
             abort(f'Missing required "{key}" in metadata.')
 
+
 def _valid_dir(directory):
     return (directory not in ('.', '..')) and (len(directory) > 0)
+
 
 @contextmanager
 def ensure_dir(directory
@@ -186,6 +219,7 @@ def ensure_dir(directory
             if os.path.exists(directory):
                 rmtree(directory)
 
+
 @contextmanager
 def target_dir_for(file, autoremove=False):
     '''
@@ -205,6 +239,7 @@ def target_dir_for(file, autoremove=False):
         if autoremove:
             if os.path.exists(directory):
                 rmtree(directory)
+
 
 @contextmanager
 def preprocess_markdown(tmp_dir, files, divs=False):
@@ -250,6 +285,7 @@ def preprocess_markdown(tmp_dir, files, divs=False):
                 t.close()
         yield generated
 
+
 def rm_rf(paths, silent=False):
     '''
     Recursively remove one or more files.
@@ -273,6 +309,33 @@ def rm_rf(paths, silent=False):
     else:
         from doit import TaskError
         raise TaskError('rm_f() expects a list, a tuple or a string.')
+
+
+def find_in_path(command):
+    '''
+    Find a command in the path, or bail.
+
+    :param command:  the command to find
+    :return: the location. Throws an exception otherwise.
+    '''
+    path = [p for p in os.getenv('PATH', '').split(os.pathsep) if len(p) > 0]
+    for d in path:
+        p = os.path.join(d, command)
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            return p
+    else:
+        raise OSError("""Can't find "{0}" in PATH.""".format(command))
+
+
+def mkdirp(dir):
+    '''
+    Equivalent of "mkdir -p".
+
+    :param dir: The directory to be created, along with any intervening
+                parent directories that don't exist.
+    '''
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
 
 def rm_f(paths, silent=False):
@@ -438,18 +501,37 @@ def fix_epub(epub, book_title, temp_dir):
             with open(toc, 'w') as f:
                 dom.writexml(f)
 
+    def fix_chapter_files():
+        msg('.. Fixing titles in chapter files...')
+        title_pat = re.compile(r'^(.*<title>).*(</title>).*$')
+
+        def fix_chapter_file(path, title):
+            with codecs.open(path, encoding='UTF-8') as f:
+                lines = [l.rstrip() for l in f.readlines()]
+            with open(path, 'w', encoding='UTF-8') as f:
+                for line in lines:
+                    m = title_pat.match(line)
+                    if m:
+                        line = f'{m.group(1)}{title}{m.group(2)}'
+                    f.write(f'{line}\n')
+
+        for file in glob('EPUB/text/ch*.xhtml'):
+            fix_chapter_file(file, title=book_title)
+
     # Main logic
     try:
         unpack_epub()
         with ensure_dir(temp_dir):
             with working_directory(temp_dir):
 
-                for toc, func in (('toc.ncx', fix_toc_ncx),
-                                  ('nav.xhtml', fix_nav_xhtml)):
+                for toc, func in ((os.path.join('EPUB', 'toc.ncx'), fix_toc_ncx),
+                                  (os.path.join('EPUB', 'nav.xhtml'), fix_nav_xhtml)):
                     if not os.path.exists(toc):
                         msg(f'.. No {toc} file. Skipping it.')
                         continue
                     func(toc)
+
+                fix_chapter_files()
 
         repack_epub()
     finally:

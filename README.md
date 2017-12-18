@@ -12,7 +12,7 @@ command (see [Building your book](#building-your-book)) to build your book.
 There are sample files in this repository, so you can build a (completely
 pointless and utterly useless) eBook right away.
 
-This tooling has been tested with [Pandoc][] version 2.0.4.
+This tooling has been tested with [Pandoc][] versions 2.0.4 and 2.0.5.
 
 ## What's where
 
@@ -178,6 +178,19 @@ extensions are enabled. See the
 - `yaml_metadata_block`: Allows metadata in the Markdown. See
   See <http://pandoc.org/MANUAL.html#extension-yaml_metadata_block> for details.
 
+- `smart`: Interprets straight quotes as curly quotes, "---" as em-dashes, 
+  "--" as en-dashes, and "..." as ellipses. Nonbreaking spaces are inserted 
+  after certain abbreviations, such as "Mr.". See
+  <http://pandoc.org/MANUAL.html#extension-smart> for details.
+  
+- `backtick_code_blocks`, `fenced_code_blocks` and `fenced_code_attributes`: 
+  Allows fenced code blocks, using backticks (GitHub Flavored Markdown-style) 
+  and tildes (`~~~`). You can also supply attributes (classes, for instance). 
+  See <http://pandoc.org/MANUAL.html#extension-fenced_code_blocks>,
+  <http://pandoc.org/MANUAL.html#extension-fenced_code_attributes> and 
+  <http://pandoc.org/MANUAL.html#extension-backtick_code_blocks> for details.
+
+
 ### Additional markup
 
 The build tool uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
@@ -202,6 +215,42 @@ into an em-dash.
 
 (The filter is written in Python, using the
 [Panflute](http://scorreia.com/software/panflute/) package.)
+
+### Support for PlantUML
+
+If you set `use_plantuml` to `true` in your metadata, you can use 
+[PlantUML](http://plantuml.com/) diagrams in your book, using special
+fenced code blocks. For instance:
+
+```
+~~~plantuml
+@startuml
+client->server: SYN
+server->client: SYN+ACK
+client->server: ACK
+@enduml
+~~~
+```
+
+You can use either tildes or backticks, and you can also use Pandoc-style
+fenced code blocks to supply attributes. If you specify an "alt" attribute
+or a "title" attribute, it will be used as the title for the image (for
+readers that display the title). If you specify both, "title" is preferred.
+For example:
+
+```
+~~~ {.plantuml title="4-way handshake"}
+@startuml
+client->server: FIN
+server->client: ACK
+server->client: FIN
+client->server: ACK
+@enduml
+~~~
+```
+
+Chapter 1 of the sample book contains these two examples.
+
 
 ## Book source file names
 
@@ -290,7 +339,9 @@ Image references to files are relative to the _top_ directory, not to the
 
 ### Table of contents
 
-- **PDF**: LaTeX, via Pandoc, generates the table of contents in the PDF.
+- **PDF**: If you're using LaTeX, Pandoc automatically generates the table of 
+  contents in the PDF. If you're using Weasy Print, there's no table of 
+  contents.
 
 - **ePub**: Pandoc generates the table of contents as part of the ePub package.
 

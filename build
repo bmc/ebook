@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Build script. Uses doit: http://pydoit.org/
 # ---------------------------------------------------------------------------
@@ -18,10 +19,10 @@
 # ---------------------------------------------------------------------------
 
 import sys
-from shutil import *
 import os
 from glob import glob
 from string import Template
+import codecs
 
 sys.path.insert(0, os.path.dirname(__file__))
 from lib import *
@@ -67,12 +68,12 @@ LATEX_COVER_PAGE_TEMPLATE  = os.path.join(FILES_DIR, 'cover-page.latex')
 LATEX_METADATA_YAML        = os.path.join(FILES_DIR, 'latex-metadata.yaml')
 REFERENCES_YAML            = os.path.join(BOOK_SRC_DIR, 'references.yaml')
 REFERENCES                 = os.path.join(FILES_DIR, 'references.md')
-DEFAULT_METADATA_YAML      = os.path.join(FILES_DIR, 'default-metadata.yaml')
 METADATA_YAML              = os.path.join(BOOK_SRC_DIR, 'metadata.yaml')
 
 metadata                   = load_metadata(METADATA_YAML)
 uses_references            = os.path.exists(REFERENCES_YAML)
 use_weasyprint             = metadata.get('use_weasyprint', False)
+uses_plantuml              = metadata.get('use_plantuml', False)
 
 COVER_IMAGE                = os.path.join(BOOK_SRC_DIR, 'cover.png')
 COVER_IMAGE_PDF            = os.path.join(BOOK_SRC_DIR, 'cover-pdf.png')
@@ -107,12 +108,13 @@ HTML_PDF_CSS       = file_or_default(os.path.join(BOOK_SRC_DIR, 'html-pdf.css'),
                                      os.path.join(FILES_DIR, 'html-pdf.css'))
 LATEX_TEMPLATE     = os.path.join(FILES_DIR, 'latex.template')
 REF_DOCX           = os.path.join(FILES_DIR, 'custom-reference.docx')
-PANDOC_FILTER      = 'scripts/pandoc-filter.py'
+PANDOC_FILTER      = os.path.join('scripts', 'pandoc-filter.py')
+PLANTUML_FILTER    = os.path.join('scripts', 'plantuml-filter.py')
 
 # Lists of dependencies, for ease of reference.
 BUILD_FILE_DEPS = [BUILD_FILE, BUILD_LIB]
 METADATA_DEPS = (
-    [DEFAULT_METADATA_YAML, METADATA_YAML, LATEX_METADATA_YAML] +
+    [METADATA_YAML, LATEX_METADATA_YAML] +
     ([REFERENCES_YAML] if uses_references else [])
 )
 
@@ -125,18 +127,34 @@ LATEX_DEPS    = DEPS + [LATEX_COVER_PAGE, LATEX_TEMPLATE,
 DOCX_DEPS     = DEPS + [REF_DOCX]
 HTML_PDF_DEPS = DEPS + [HTML_PDF_CSS, HTML_BODY_INCLUDE]
 
+PANDOC        = find_in_path('pandoc')
+
 # +RTS and -RTS delimit Haskell runtime options. See
 # http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/runtime-control.html
 #
 # -Ksize sets the stack size. -K10m uses a 10 Mb stack, for instance. The
 # default size is 8M.
 
-HASKELL_OPTS = '+RTS -K20m -RTS'
-#HASKELL_OPTS = ''
-INPUT_FORMAT = "markdown+line_blocks+escaped_line_breaks+smart"
+#HASKELL_OPTS = '+RTS -K20m -RTS'
+HASKELL_OPTS = ''
+
+PANDOC_EXTENSIONS = (
+    "line_blocks",
+    "escaped_line_breaks",
+    "smart",
+    "fenced_code_blocks",
+    "fenced_code_attributes",
+    "backtick_code_blocks",
+    "yaml_metadata_block",
+)
+
+INPUT_FORMAT = "markdown+{}".format('+'.join(PANDOC_EXTENSIONS))
+
 COMMON_PANDOC_OPTS = (
-    f"-F {PANDOC_FILTER} -s -f {INPUT_FORMAT} {HASKELL_OPTS}" +
-    (" -F pandoc-citeproc" if uses_references else "")
+    f"-f {INPUT_FORMAT} {HASKELL_OPTS} -F {PANDOC_FILTER}" +
+    (" -F pandoc-citeproc" if uses_references else "") +
+    (f" -F {PLANTUML_FILTER}" if uses_plantuml else "") +
+    (" --standalone")
 )
 NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} "
 LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
@@ -145,11 +163,11 @@ LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
 HTML_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t html -B {HTML_BODY_INCLUDE} ' +
                     f'--self-contained --css={HTML_CSS} ' +
                     f'-H {HTML_HEAD_INCLUDE}')
-EPUB_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t epub3 --toc ' +
-                    f'--epub-chapter-level=1 --epub-stylesheet={EPUB_CSS} ' +
+EPUB_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t epub --toc ' +
+                    f'--epub-chapter-level=1 --css={EPUB_CSS} ' +
                     f'--epub-metadata={EPUB_METADATA} ' +
                     f'--epub-cover-image={COVER_IMAGE}')
-DOCX_PANDOC_OPTS = f'{NON_LATEX_PANDOC_OPTS} -t docx --reference-docx={REF_DOCX}'
+DOCX_PANDOC_OPTS = f'{NON_LATEX_PANDOC_OPTS} -t docx --reference-doc={REF_DOCX}'
 
 HTML_PDF_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t html ' +
                         f'--css={HTML_PDF_CSS} --pdf-engine=weasyprint ' +
@@ -212,7 +230,7 @@ def task_html():
     def run(targets):
         with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST, divs=True) as files:
             files_str = ' '.join(files)
-            sh(f"pandoc {HTML_PANDOC_OPTS} -o {targets[0]} {files_str} ")
+            sh(f"{PANDOC} {HTML_PANDOC_OPTS} -o {targets[0]} {files_str} ")
 
     return {
         'actions': [run],
@@ -254,7 +272,7 @@ def task_pdf():
         with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
             files_str = ' '.join(files)
             target = targets[0]
-            sh(f"pandoc {HTML_PDF_PANDOC_OPTS} -o {target} {files_str}")
+            sh(f'{PANDOC} {HTML_PDF_PANDOC_OPTS} -o {target} {files_str}')
 
 
     if use_weasyprint:
@@ -292,7 +310,7 @@ def task_json():
             files_str = ' '.join(files)
             temp = '_ast.json'
             try:
-                sh(f'pandoc {NON_LATEX_PANDOC_OPTS} -o _ast.json -t json ' +
+                sh(f'{PANDOC} {NON_LATEX_PANDOC_OPTS} -o _ast.json -t json ' +
                    files_str)
                 with open(temp, 'r') as f:
                     import json
@@ -317,7 +335,7 @@ def task_docx():
     def run(targets):
         with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
             files_str = ' '.join(files)
-            sh(f"pandoc {DOCX_PANDOC_OPTS} -o {targets[0]} {files_str}")
+            sh(f"{PANDOC} {DOCX_PANDOC_OPTS} -o {targets[0]} {files_str}")
 
     return {
         'actions': [run],
@@ -332,9 +350,12 @@ def task_epub():
     '''
 
     def run(targets):
-        with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
-            files_str = ' '.join(files)
-            sh(f'pandoc  {EPUB_PANDOC_OPTS} -o {targets[0]} {files_str}')
+        markdown = [f for f in BOOK_FILE_LIST if f.endswith(".md")]
+        yamls = [f for f in BOOK_FILE_LIST if f.endswith(".yaml")]
+        with preprocess_markdown(TMP_DIR, markdown) as files:
+            files_str = ' '.join(yamls + files)
+            alert('Ignore any Pandoc warnings about "title" or "pagetitle".')
+            sh(f'{PANDOC} {EPUB_PANDOC_OPTS} -o {targets[0]} {files_str}')
             fix_epub(epub=targets[0],
                      book_title=metadata['title'],
                      temp_dir=os.path.join(TMP_DIR, 'book-epub'))
@@ -374,22 +395,24 @@ def task_combined_metadata():
         target = targets[0]
         with target_dir_for(target):
             with open(target, 'w') as out:
-                out.write('---\n')
-                data = {}
                 for f in METADATA_DEPS:
                     if not os.path.exists(f):
                         continue
 
-                    data.update(load_metadata(f))
+                    out.write('---\n')
+                    with codecs.open(f, 'r', encoding='UTF-8') as input:
+                        for line in input.readlines():
+                            out.write(line)
+                    out.write('...\n\n')
 
-                # Special cases.
+                # Special cases. Put these at the bottom. Pandoc will
+                # ignore them if they're already specified (i.e., first one
+                # wins, according to the Pandoc documentation).
 
-                if not data.get('lang'):
-                    language = data.get('language', 'en-US')
-                    data['lang'] = language.split('-')[0]
-
-                yaml.dump(data, out)
-                out.write('\n...\n')
+                out.write('---\n')
+                language = metadata.get('language', 'en-US')
+                out.write('lang: {}\n'.format(language.split('-')[0]))
+                out.write('...\n\n')
 
     return {
         'actions':  [run],
@@ -471,7 +494,7 @@ def _no_op(targets):
 
 def _check_pandoc():
     import subprocess
-    with subprocess.Popen(("pandoc", "--version"),
+    with subprocess.Popen((f"{PANDOC}", "--version"),
                           stdout=subprocess.PIPE,
                           encoding='ascii') as p:
         stdout, _ = p.communicate()

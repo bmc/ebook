@@ -1,5 +1,0 @@
-# Values in this file can be overridden in book/metadata.yaml
-
-# Whether PDF generation uses Weasy Print (true) or LaTeX (false). Defaults to
-# false (LaTeX).
-use_weasyprint: false

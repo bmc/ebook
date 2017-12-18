@@ -7,6 +7,14 @@ subtitle: "That's the way it goes"
 
 publisher: Horrid Enterprises, Ltd.
 
+# Whether or not to enable PlantUML. You must install PlantUML, and the
+# "plantuml" command must be in your path, if you enable this feature.
+#
+# Default, if not specified: false
+use_plantuml: true
+
+# Whether PDF generation uses Weasy Print (true) or LaTeX (false). Defaults to
+# false (LaTeX).
 use_weasyprint: true
 
 # Set to the language in which the book is written. This is especially
@@ -23,6 +31,7 @@ author:
 #  scheme: ISBN # or DOI
 #  text: 123456789X
 
+# The language and variant in which the book is written.
 language: en-US
 
 # See https://wiki.mobileread.com/wiki/Genre

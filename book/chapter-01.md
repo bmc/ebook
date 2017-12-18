@@ -20,6 +20,27 @@ pellentesque ac ut a feugiat viverra id sed magnis mauris pellentesque viverra
 mauris. Consequat cras ipsum. Mauris etiam fermentum. Enim consectetuer sem.
 Fusce metus sed. Felis erat adipiscing suscipit fusce sodales.
 
+Here's a short-form PlantUML example:
+
+```plantuml
+@startuml
+client->server: SYN
+server->client: SYN+ACK
+client->server: ACK
+@enduml
+```
+
+Here's a longer-form PlantUML example:
+
+~~~ {.plantuml title="4-way handshake"}
+@startuml
+client->server: FIN
+server->client: ACK
+server->client: FIN
+client->server: ACK
+@enduml
+~~~
+
 Nec augue reprehenderit mattis eu scelerisque aliquam elementum feugiat.
 Aliquam eget malesuada. Suscipit odio risus. Id neque quam neque tortor amet.
 Integer mauris consectetuer. A dui lobortis elit sed ornare ullamcorper nulla

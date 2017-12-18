@@ -21,14 +21,13 @@ Pandoc filter to convert transform special sequences on a per-format basis.
 
 See the top-level README.md file for what's supported.
 
-See http://scorreia.com/software/panflute/ and 
+See http://scorreia.com/software/panflute/ and
 https://github.com/jgm/pandoc/wiki/Pandoc-Filters
 """
 
 import sys
 from panflute import *
 import os
-import re
 from itertools import dropwhile, takewhile
 
 # Need the lib module. Make sure it can be found.
@@ -85,7 +84,7 @@ DOCX_JUSTIFICATION_STYLES = {
     CENTER_JUSTIFY:   'Centered',
     RIGHT_JUSTIFY:    'JustifyRight'
 }
-    
+
 
 # ---------------------------------------------------------------------------
 # Helper classes
@@ -93,7 +92,7 @@ DOCX_JUSTIFICATION_STYLES = {
 
 class DataHolder:
     '''
-    Allows for assign-and-test. See 
+    Allows for assign-and-test. See
     http://code.activestate.com/recipes/66061-assign-and-test/
     '''
     def __init__(self, value=None):
@@ -318,18 +317,18 @@ def section_sep(elem, format):
 def substitute_any_metadata(elem, doc):
     '''
     Checks a string to determine whether it matches one of the SIMPLE_PATTERNS
-    metadata keys, updating the element by substituting the appropriate 
+    metadata keys, updating the element by substituting the appropriate
     metadata value, if found.
 
     Parameters:
 
-    elem: the element to check 
+    elem: the element to check
     doc:  the Document object
 
     Returns: the possibly updated element
     '''
     assert isinstance(elem, Str)
-    
+
     for pat, meta_key in SIMPLE_PATTERNS:
         m = matches_pattern(elem, pat)
         if m:
@@ -378,7 +377,7 @@ def transform(elem, doc):
     elem:  An element to process
     doc:   The Document object
 
-    Returns: the possibly updated element
+    :return: the possibly updated element
     '''
     data = DataHolder()
     if isinstance(elem, Header) and elem.level == 1:
