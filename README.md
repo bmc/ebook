@@ -90,15 +90,20 @@ Be sure to read the change log for the new release.
 5. You can generate PDF via either LaTeX or [Weasy Print][]. There are
    advantages and disadvantages to each; see [Generating PDF](#generating-pdf),
    below.
-    a. If you'll be using LaTeX, install a TexLive distribution.
-        * On Mac OS, use [MacTex](https://www.tug.org/mactex/mactex-download.html),
-          and ensure that `/Library/TeX/texbin` is in your path.
-        * On Ubuntu/Debian, install `texlive`, `texlive-latex-recommended` and
-          `texlive-latex-extras`.
-        * On Windows, this might work: <https://www.tug.org/texlive/windows.html>.
-    b. If you'll be using [Weasy Print][], make sure your Python 3 environment
-       is activated, and follow the directions at 
-       <http://weasyprint.readthedocs.io/en/latest/install.html>
+    * If you'll be using LaTeX, install a TexLive distribution, as detailed
+      [below](installing-texlive).
+    * If you'll be using [Weasy Print][], make sure your Python 3 environment
+      is activated, and follow the directions at 
+      <http://weasyprint.readthedocs.io/en/latest/install.html>
+
+#### Installing TexLive
+
+* On Mac OS, use [MacTex](https://www.tug.org/mactex/mactex-download.html),
+  and ensure that `/Library/TeX/texbin` is in your path.
+* On Ubuntu/Debian, install `texlive`, `texlive-latex-recommended` and
+  `texlive-latex-extras`.
+* On Windows, this might work: <https://www.tug.org/texlive/windows.html>.
+
 
 **WARNING**: I avoid Windows as much as possible. I do not (and, likely,
 never will) test this stuff on Windows. If you insist on using that platform,
