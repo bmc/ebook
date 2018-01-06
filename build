@@ -31,7 +31,7 @@ from lib import *
 # Constants
 # ---------------------------------------------------------------------------
 
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 
 BOOK_SRC_DIR = 'book'
 TMP_DIR  = 'tmp'
@@ -77,7 +77,7 @@ uses_plantuml              = metadata.get('use_plantuml', False)
 
 COVER_IMAGE                = os.path.join(BOOK_SRC_DIR, 'cover.png')
 COVER_IMAGE_PDF            = os.path.join(BOOK_SRC_DIR, 'cover-pdf.png')
-CHAPTERS                   = glob(os.path.join(BOOK_SRC_DIR, 'chapter-*.md'))
+CHAPTERS                   = sorted(glob(os.path.join(BOOK_SRC_DIR, 'chapter-*.md')))
 COPYRIGHT                  = os.path.join(BOOK_SRC_DIR, 'copyright.md')
 LATEX_HEADER               = os.path.join(FILES_DIR, 'header.latex')
 APPENDICES                 = glob(os.path.join(BOOK_SRC_DIR, 'appendix-*.md'))
