@@ -2,7 +2,7 @@
 
 * Fixed [Issue 1](https://github.com/bmc/ebook-template/issues/1):
   the build wasn't ordering the chapters properly, because of a missing
-  sort. Thanks to [@https://github.com/szaffarano](szaffarano) for the
+  sort. Thanks to [@szaffarano](https://github.com/szaffarano) for the
   issue and the patch.
 
 **Version 0.6.0**
