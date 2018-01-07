@@ -96,6 +96,15 @@ easily create your own Git repository from the results.)
 
 Then, install the required software and update the configuration files.
 
+**NOTE**: If you don't want to install the dependencies on your machine, you
+you can set up a Docker image to isolate them. Courtesy of
+[@szaffarano](https://github.com/szaffarano), there's a `./build-docker`
+script in the top-level directory. Just run it. (The first time you run it,
+the script will build a Docker image with all the dependencies, which can
+take some time.)
+
+If you don't want to bother with Docker, just keep reading.
+
 ### Upgrading
 
 If you're already using this tooling for one of your books, and you want to
