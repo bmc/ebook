@@ -1,3 +1,11 @@
+**Version 0.7.0**
+
+* Courtesy of [@szaffarano](https://github.com/szaffarano), there's now a
+  `./build-docker` script that will install and run the entire toolchain in
+  an isolated Docker image. See
+  [this section in the README](https://github.com/bmc/ebook-template#can-i-use-docker-why-yes)
+  for details.
+
 **Version 0.6.1**
 
 * Fixed [Issue 1](https://github.com/bmc/ebook-template/issues/1):
