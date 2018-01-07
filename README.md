@@ -96,8 +96,10 @@ easily create your own Git repository from the results.)
 
 Then, install the required software and update the configuration files.
 
-**NOTE**: If you don't want to install the dependencies on your machine, you
-you can set up a Docker image to isolate them. Courtesy of
+### Can I use Docker? Why, yes!
+
+If you don't want to install the dependencies on your machine, you can create
+a Docker image to isolate them. Courtesy of
 [@szaffarano](https://github.com/szaffarano), there's a `./build-docker`
 script in the top-level directory. Just run it. (The first time you run it,
 the script will build a Docker image with all the dependencies, which can
