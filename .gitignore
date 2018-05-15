@@ -9,3 +9,5 @@ book.pdf
 book.latex
 doit-db.json
 __pycache__
+/.direnv
+.envrc

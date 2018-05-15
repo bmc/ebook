@@ -1,3 +1,7 @@
+**Version 0.7.1**
+
+* Fixed pandoc version checking. Patch courtesy of @dnstanciu
+*
 **Version 0.7.0**
 
 * Courtesy of [@szaffarano](https://github.com/szaffarano), there's now a
