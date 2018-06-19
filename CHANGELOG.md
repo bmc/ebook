@@ -1,3 +1,7 @@
+**Version 0.7.2**
+
+* Another fix to Pandoc version checks in `build`.
+
 **Version 0.7.1**
 
 * Fixed pandoc version checking. Patch courtesy of @dnstanciu
