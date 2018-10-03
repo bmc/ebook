@@ -101,11 +101,12 @@ Then, install the required software and update the configuration files.
 If you don't want to install the dependencies on your machine, you can create
 a Docker image to isolate them. Courtesy of
 [@szaffarano](https://github.com/szaffarano), there's a `./build-docker`
-script in the top-level directory. Just run it. (The first time you run it,
-the script will build a Docker image with all the dependencies, which can
-take some time.)
+script in the top-level directory. 
 
-If you don't want to bother with Docker, just keep reading.
+Instead of running `./build` to build your book, simply run `./build-docker`,
+instead. The first time you run it, the script will build a Docker image with
+all the dependencies. (This process can take some time.)
+
 
 ### Upgrading
 

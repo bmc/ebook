@@ -57,6 +57,7 @@ def copy_files(path):
 
     msg('Upgrading build script.')
     copy(os.path.join(path, 'build'), '.')
+    copy(os.path.join(path, 'build-docker'), '.')
 
     msg('Copying upgrade.py (because, why not?).')
     copy(os.path.join(path, 'upgrade.py'), '.')
