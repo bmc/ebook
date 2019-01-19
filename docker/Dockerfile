@@ -19,6 +19,7 @@ RUN \
     openjdk-8-jre \
     virtualenv python-virtualenv \
     locales \
+    plantuml \
     curl && \
   rm -rf /var/lib/apt/lists/*
 
@@ -29,9 +30,9 @@ RUN curl -LO \
   dpkg -i pandoc-2.0.6-1-amd64.deb && \
   rm pandoc-2.0.6-1-amd64.deb
 
-RUN curl -L -o /usr/local/bin/plantuml.jar \
-  http://sourceforge.net/projects/plantuml/files/plantuml.jar/download
-ADD plantuml /usr/local/bin/
+#RUN curl -L -o /usr/local/bin/plantuml.jar \
+#  http://sourceforge.net/projects/plantuml/files/plantuml.jar/download
+#ADD plantuml /usr/local/bin/
 
 RUN \
   groupadd --gid ${GID} ${USERNAME} && \
