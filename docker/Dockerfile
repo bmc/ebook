@@ -23,7 +23,6 @@ RUN \
   rm -rf /var/lib/apt/lists/*
 
 RUN locale-gen es_AR.UTF-8 && update-locale
-ENV LC_ALL es_AR.UTF-8
 
 RUN curl -LO \
   https://github.com/jgm/pandoc/releases/download/2.0.6/pandoc-2.0.6-1-amd64.deb && \
