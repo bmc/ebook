@@ -37,9 +37,9 @@ RUN curl -LO \
 #  http://sourceforge.net/projects/plantuml/files/plantuml.jar/download
 #ADD plantuml /usr/local/bin/
 
-RUN \
-  groupadd --gid ${GID} ${USERNAME} && \
-  useradd --uid ${UID} --gid ${GID} --create-home ${USERNAME}
+#RUN \
+#  groupadd --gid ${GID} ${USERNAME} && \
+#  useradd --uid ${UID} --gid ${GID} --create-home ${USERNAME}
 
 USER      ${USERNAME}
 
