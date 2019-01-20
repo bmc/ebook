@@ -55,9 +55,8 @@ RUN \
 WORKDIR   /home/${USERNAME}/book
 VOLUME    /home/${USERNAME}/book
 
-RUN mkdir -p /usr/local/bin
-RUN curl -L -o /usr/local/bin/entrypoint.sh \
-  https://raw.githubusercontent.com/bmc/ebook-template/master/docker/entrypoint.sh
-RUN sed -i s/USERNAME/${USERNAME}/g /usr/local/bin/entrypoint.sh
-
+#RUN mkdir -p /usr/local/bin
+#RUN curl -L -o /usr/local/bin/entrypoint.sh \
+#  https://raw.githubusercontent.com/bmc/ebook-template/master/docker/entrypoint.sh
+#RUN sed -i s/USERNAME/${USERNAME}/g /usr/local/bin/entrypoint.sh
 #ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
