@@ -38,9 +38,6 @@ RUN \
   groupadd --gid ${GID} ${USERNAME} && \
   useradd --uid ${UID} --gid ${GID} --create-home ${USERNAME}
 
-ADD entrypoint.sh /
-RUN sed -i s/USERNAME/${USERNAME}/g /entrypoint.sh
-
 USER      ${USERNAME}
 
 RUN virtualenv -p python3 /home/${USERNAME}/env
@@ -57,5 +54,6 @@ VOLUME    /home/${USERNAME}/book
 
 RUN curl -L -o /entrypoint.sh \
   https://raw.githubusercontent.com/bmc/ebook-template/master/docker/entrypoint.sh
+RUN sed -i s/USERNAME/${USERNAME}/g /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
