@@ -60,4 +60,4 @@ RUN curl -L -o /usr/local/bin/entrypoint.sh \
   https://raw.githubusercontent.com/bmc/ebook-template/master/docker/entrypoint.sh
 RUN sed -i s/USERNAME/${USERNAME}/g /usr/local/bin/entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+#ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
