@@ -1,8 +1,8 @@
 FROM ubuntu:17.10
 
-ENV USERNAME              user
-ENV UID                   1000
-ENV GID                   1000
+#ENV USERNAME              user
+#ENV UID                   1000
+#ENV GID                   1000
 
 RUN \
   sed -i \
