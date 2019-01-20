@@ -55,4 +55,7 @@ RUN \
 WORKDIR   /home/${USERNAME}/book
 VOLUME    /home/${USERNAME}/book
 
+RUN curl -L -o /entrypoint.sh \
+  https://raw.githubusercontent.com/bmc/ebook-template/master/docker/entrypoint.sh
+
 ENTRYPOINT ["/entrypoint.sh"]
