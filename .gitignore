@@ -11,3 +11,4 @@ doit-db.json
 __pycache__
 /.direnv
 .envrc
+.mypy_cache
