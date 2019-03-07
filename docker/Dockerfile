@@ -32,16 +32,16 @@ RUN curl -LO \
 
 RUN mkdir -p /usr/local/bin
 
+COPY entrypoint.sh /tmp
+RUN sed 's/USERNAME/${USERNAME}/g' </tmp/entrypoint.sh >/usr/local/bin/entrypoint
+RUN chmod 755 /usr/local/bin/entrypoint
+
 # This fails, because of stupid SourceForge hosting. So, we just include
 # a version of the jar in the repo.
 #RUN curl -L -o /usr/local/bin/plantuml.jar \
 #  http://sourceforge.net/projects/plantuml/files/plantuml.jar/download
-ADD plantuml /usr/local/bin/
-ADD plantuml.jar /usr/local/bin/
-
-ADD entrypoint.sh /tmp
-RUN sed 's/USERNAME/${USERNAME}/g' </tmp/entrypoint.sh >/usr/local/bin/entrypoint
-RUN chmod 755 /usr/local/bin/entrypoint
+COPY plantuml /usr/local/bin/
+COPY plantuml.jar /usr/local/bin/
 
 USER ${USERNAME}
 
