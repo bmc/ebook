@@ -1,4 +1,4 @@
-**Version 0.8.0***
+**Version 0.8.0**
 
 - Now insists on Pandoc version 2.7.
 - All files are now read and written in "UTF-8" encoding.
