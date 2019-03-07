@@ -63,12 +63,13 @@ def copy_files(path):
     copy(os.path.join(path, 'upgrade.py'), '.')
 
 def upgrade(path):
+
+    copy_files(path)
+
     if os.path.exists('./build'):
         msg('Running: ./build clobber')
         if os.system('./build clobber') != 0:
             sys.exit(1)
-
-    copy_files(path)
 
     VERSION_PAT = re.compile(r'^\s*VERSION\s*=\s*([^\s]+)$')
     version = "unknown"
