@@ -6,5 +6,5 @@ VERSION=latest
 docker pull $IMAGE:$VERSION
 
 docker run -it --rm --name ebook \
-  -v $(pwd):/home/user/book \
-  ${IMAGE}:${VERSION} ./build $@
+  -v $(pwd):/home/root/book \
+  ${IMAGE}:${VERSION} python3 ./build $@
