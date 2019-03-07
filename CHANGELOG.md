@@ -1,3 +1,12 @@
+**Version 0.8.0***
+
+- Now insists on Pandoc version 2.7.
+- All files are now read and written in "UTF-8" encoding.
+- Pushes now result in creation of a Docker image in Docker Hub, so there's
+  no need to build a local Docker image.
+- `./build-docker` now just pulls the latest Docker image from Docker hub,
+  so it's faster.
+
 **Version 0.7.2**
 
 * Another fix to Pandoc version checks in `build`.

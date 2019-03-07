@@ -28,7 +28,7 @@ import re
 from textwrap import TextWrapper
 from glob import glob
 import codecs
-from typing import Any, Sequence, Dict, Mapping, Generator, Union
+from typing import Any, Sequence, Dict, Mapping, Generator, Union, TextIO
 
 try:
     _columns = int(os.getenv('COLUMNS', '80'))
@@ -56,6 +56,16 @@ def import_from_file(path: str, module_name: str) -> Any:
     sys.modules[module_name] = mod
     return mod
 
+@contextmanager
+def open_file(path: str,
+              mode: str = 'r',
+              encoding='utf-8') -> Generator[TextIO, None, None]:
+    """
+    Convenient front-end to codecs.open
+    """
+    with codecs.open(path, mode=mode, encoding=encoding) as f:
+        yield f
+
 
 def find_local_images(markdown_files: Sequence[str]) -> Sequence[str]:
     from urllib.parse import urlparse
@@ -65,7 +75,7 @@ def find_local_images(markdown_files: Sequence[str]) -> Sequence[str]:
     for f in markdown_files:
         if not os.path.exists(f):
             continue
-        with open(f) as md:
+        with open_file(f, mode='r') as md:
             for line in md.readlines():
                 m = image_pat.match(line)
                 if not m:
@@ -174,7 +184,7 @@ def load_metadata(metadata_file: str) -> Dict[str, Any]:
     metadata_file; path to the file to load
     """
     if os.path.exists(metadata_file):
-        with open(metadata_file) as f:
+        with open_file(metadata_file, mode='r') as f:
             s = ''.join([s for s in f if not s.startswith('---')])
             metadata = yaml.load(s, Loader=yaml.FullLoader)
     else:
@@ -276,7 +286,7 @@ def preprocess_markdown(
     generated = [t for f, t in from_to]
     with ensure_dir(directory, autoremove=True):
         for f, temp in from_to:
-            with open(temp, "w") as t:
+            with open_file(temp, mode="w") as t:
                 basefile, ext = os.path.splitext(os.path.basename(f))
                 m = file_without_dashes.match(basefile)
                 if m:
@@ -287,7 +297,7 @@ def preprocess_markdown(
                 # Added classes to each section. Can be used in CSS.
                 if divs and ext == ".md":
                     t.write(f'<div class="book_section" id="section_{cls}">\n')
-                with open(f) as input_file:
+                with open_file(f, mode='r') as input_file:
                     for line in input_file.readlines():
                         t.write(f"{line.rstrip()}\n")
                 # Force a newline after each file.
@@ -435,7 +445,7 @@ def fix_epub(epub: str, book_title: str, temp_dir: str) -> None:
     def fix_toc_ncx(table_of_contents):
         # Assumes pwd *is* unpack directory
         msg(f'.. Reading table of contents file "{table_of_contents}".')
-        with open(table_of_contents) as f:
+        with open_file(table_of_contents) as f:
             toc_xml = f.read()
 
         msg('.. Adjusting table of contents.')
@@ -462,13 +472,13 @@ def fix_epub(epub: str, book_title: str, temp_dir: str) -> None:
             strip_text_children(nav_map)
 
             # Write it out.
-            with open(toc, 'w') as f:
+            with open_file(toc, mode='w') as f:
                 dom.writexml(f)
 
     def fix_nav_xhtml(table_of_contents):
         # Assumes pwd *is* unpack directory
         msg(f'.. Reading table of contents file "{table_of_contents}".')
-        with open(table_of_contents) as f:
+        with open_file(table_of_contents) as f:
             toc_xml = f.read()
 
         msg('.. Adjusting table of contents.')
@@ -510,7 +520,7 @@ def fix_epub(epub: str, book_title: str, temp_dir: str) -> None:
             strip_text_children(ol)
 
             # Write it out.
-            with open(toc, 'w') as f:
+            with open_file(toc, mode='w') as f:
                 dom.writexml(f)
 
     def fix_chapter_files():
@@ -518,9 +528,9 @@ def fix_epub(epub: str, book_title: str, temp_dir: str) -> None:
         title_pat = re.compile(r'^(.*<title>).*(</title>).*$')
 
         def fix_chapter_file(path, title):
-            with codecs.open(path, encoding='UTF-8') as f:
+            with open_file(path) as f:
                 lines = [l.rstrip() for l in f.readlines()]
-            with open(path, 'w', encoding='UTF-8') as f:
+            with open_file(path, mode='w') as f:
                 for line in lines:
                     m = title_pat.match(line)
                     if m:

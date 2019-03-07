@@ -1,11 +1,7 @@
 FROM ubuntu:17.10
 
-#ENV USERNAME              user
-#ENV UID                   1000
-#ENV GID                   1000
-ENV USERNAME root
-ENV UID 0
-ENV GID 0
+RUN groupadd -g 1001 user
+RUN useradd -r -u 1001 -g user --create-home user
 
 RUN \
   sed -i \
@@ -20,6 +16,7 @@ RUN \
     lmodern \
     ttf-ubuntu-font-family \
     openjdk-8-jre \
+    python3.7 \
     virtualenv python-virtualenv \
     locales \
     plantuml \
@@ -29,19 +26,24 @@ RUN \
 RUN locale-gen es_AR.UTF-8 && update-locale
 
 RUN curl -LO \
-  https://github.com/jgm/pandoc/releases/download/2.0.6/pandoc-2.0.6-1-amd64.deb && \
-  dpkg -i pandoc-2.0.6-1-amd64.deb && \
-  rm pandoc-2.0.6-1-amd64.deb
+  https://github.com/jgm/pandoc/releases/download/2.7/pandoc-2.7-1-amd64.deb && \
+  dpkg -i pandoc-2.7-1-amd64.deb && \
+  rm pandoc-2.7-1-amd64.deb
 
+RUN mkdir -p /usr/local/bin
+
+# This fails, because of stupid SourceForge hosting. So, we just include
+# a version of the jar in the repo.
 #RUN curl -L -o /usr/local/bin/plantuml.jar \
 #  http://sourceforge.net/projects/plantuml/files/plantuml.jar/download
-#ADD plantuml /usr/local/bin/
+ADD plantuml /usr/local/bin/
+ADD plantuml.jar /usr/local/bin/
 
-#RUN \
-#  groupadd --gid ${GID} ${USERNAME} && \
-#  useradd --uid ${UID} --gid ${GID} --create-home ${USERNAME}
+ADD entrypoint.sh /tmp
+RUN sed 's/USERNAME/${USERNAME}/g' </tmp/entrypoint.sh >/usr/local/bin/entrypoint
+RUN chmod 755 /usr/local/bin/entrypoint
 
-USER      ${USERNAME}
+USER ${USERNAME}
 
 RUN virtualenv -p python3 /home/${USERNAME}/env
 
@@ -52,11 +54,7 @@ RUN \
   pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt && \
   pip install WeasyPrint
 
-WORKDIR   /home/${USERNAME}/book
-VOLUME    /home/${USERNAME}/book
+WORKDIR /home/${USERNAME}/book
+VOLUME  /home/${USERNAME}/book
 
-#RUN mkdir -p /usr/local/bin
-#RUN curl -L -o /usr/local/bin/entrypoint.sh \
-#  https://raw.githubusercontent.com/bmc/ebook-template/master/docker/entrypoint.sh
-#RUN sed -i s/USERNAME/${USERNAME}/g /usr/local/bin/entrypoint.sh
-#ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint"]

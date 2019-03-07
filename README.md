@@ -99,13 +99,17 @@ Then, install the required software and update the configuration files.
 ### Can I use Docker? Why, yes!
 
 If you don't want to install the dependencies on your machine, you can create
-a Docker image to isolate them. Courtesy of
-[@szaffarano](https://github.com/szaffarano), there's a `./build-docker`
-script in the top-level directory. 
+a Docker image to isolate them. Originally courtesy of
+[@szaffarano](https://github.com/szaffarano), and modified more lately,
+there's a `./build-docker` script in the top-level directory. 
 
 Instead of running `./build` to build your book, simply run `./build-docker`,
-instead. The first time you run it, the script will build a Docker image with
-all the dependencies. (This process can take some time.)
+instead. When you run it, the script will pull the latest Docker image from
+`bclapper/ebook-template` (on Docker Hub), and it will use Docker to build
+your book.
+
+Using this approach guarantees a consistent environment that has the right
+versions of Python, Pandoc, and the other tools.
 
 
 ### Upgrading
