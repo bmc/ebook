@@ -96,20 +96,27 @@ easily create your own Git repository from the results.)
 
 Then, install the required software and update the configuration files.
 
-### Can I use Docker? Why, yes!
+**Note**: If you use the Docker approach, you won't have to worry about 
+installing the [required software](#required-software).
 
-If you don't want to install the dependencies on your machine, you can create
-a Docker image to isolate them. Originally courtesy of
-[@szaffarano](https://github.com/szaffarano), and modified more lately,
-there's a `./build-docker` script in the top-level directory. 
+### Using Docker
 
-Instead of running `./build` to build your book, simply run `./build-docker`,
-instead. When you run it, the script will pull the latest Docker image from
-`bclapper/ebook-template` (on Docker Hub), and it will use Docker to build
-your book.
+If you don't want to install the dependencies on your machine, you can pull
+a Docker image that has everything you need. In the top-level directory,
+there's a `./build-docker` script you can use, instead of the `./build`
+script. Where `./build` assumes you have all the prerequisite software on your
+machine, `./build-docker` pulls down a prebuilt Docker image containing
+everything you need, then uses that image to build your ebook.
 
-Using this approach guarantees a consistent environment that has the right
-versions of Python, Pandoc, and the other tools.
+When you run `./build-docker`, the script will:
+
+- pull the latest Docker image from `bclapper/ebook-template` (on Docker Hub)
+- fire up an instance of the image, making the current working directory
+  available to Docker, and
+- run `./build` within the image.
+
+The Docker image contains all the required software, so you don't have to
+install anything (except, of course, Docker).
 
 
 ### Upgrading
@@ -138,6 +145,9 @@ If there are metadata changes, however, `upgrade.py` won't apply them.
 Be sure to read the change log for the new release.
 
 ### Required software
+
+If you're not using Docker, you'll need to install a bunch of tools on your
+local machine.
 
 1. Install [pandoc](http://pandoc.org/installing.html).
 2. Install a Python distribution, version 3.6 or better.
@@ -169,10 +179,10 @@ Be sure to read the change log for the new release.
   `texlive-latex-extras`.
 * On Windows, this might work: <https://www.tug.org/texlive/windows.html>.
 
-
 **WARNING**: I avoid Windows as much as possible. I do not (and, likely,
 never will) test this stuff on Windows. If you insist on using that platform,
-you're more or less on your own.
+you're more or less on your own. (I recommend using the Docker approach on
+Windows.)
 
 ### Initial configuration
 
