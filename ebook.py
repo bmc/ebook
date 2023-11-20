@@ -823,6 +823,7 @@ def _build_book(book_dir: Path,
                 logger: logging.Logger) -> None:
     logger.debug(f'Building book in {book_dir}')
     pandoc = _check_pandoc(logger)
+    _make_build_dir(build_dir, logger)
     with TemporaryDirectory(prefix="ebook") as tempdir_name:
         tempdir = Path(tempdir_name)
         sources = _find_sources(book_dir, files_dir, tempdir)
