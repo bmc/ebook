@@ -13,3 +13,5 @@ __pycache__
 .envrc
 .mypy_cache
 /.vscode
+build
+venv

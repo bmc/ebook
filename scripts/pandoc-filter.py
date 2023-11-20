@@ -35,8 +35,8 @@ from typing import Pattern, Match, Any, List, Generic, TypeVar, Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from lib import *
 
-if sys.version_info < (3,6):
-    print("Must use Python 3.6 or better.")
+if sys.version_info < (3,10):
+    print("Must use Python 3.10 or better.")
     sys.exit(1)
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,6 @@ DOCX_JUSTIFICATION_STYLES = {
 # ---------------------------------------------------------------------------
 
 T = TypeVar('T')
-
 
 class DataHolder(Generic[T]):
     """
@@ -449,6 +448,7 @@ def transform(elem: Element, doc: Doc) -> Element:
 
 
 def main(doc: Optional[Doc] = None):
+    debug('ENTRY')
     return run_filter(transform, prepare=prepare, doc=doc)
 
 

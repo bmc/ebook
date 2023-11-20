@@ -27,8 +27,10 @@ from contextlib import contextmanager
 import re
 from textwrap import TextWrapper
 from glob import glob
-import codecs
-from typing import Any, Sequence, Dict, Mapping, Generator, Union, TextIO
+from pathlib import Path
+import logging
+from typing import (Any, Sequence as Seq, Dict, Mapping, Generator, Union,
+                    TextIO, Optional)
 
 try:
     _columns = int(os.getenv('COLUMNS', '80'))
@@ -56,39 +58,8 @@ def import_from_file(path: str, module_name: str) -> Any:
     sys.modules[module_name] = mod
     return mod
 
-@contextmanager
-def open_file(path: str,
-              mode: str = 'r',
-              encoding='utf-8') -> Generator[TextIO, None, None]:
-    """
-    Convenient front-end to codecs.open
-    """
-    with codecs.open(path, mode=mode, encoding=encoding) as f:
-        yield f
 
-
-def find_local_images(markdown_files: Sequence[str]) -> Sequence[str]:
-    from urllib.parse import urlparse
-    image_pat = re.compile(r'^\s*!\[.*\]\(([^\)]+)\).*$')
-
-    images = []
-    for f in markdown_files:
-        if not os.path.exists(f):
-            continue
-        with open_file(f, mode='r') as md:
-            for line in md.readlines():
-                m = image_pat.match(line)
-                if not m:
-                    continue
-                p = urlparse(m.group(1))
-                if p.scheme:
-                    continue
-                images.append(m.group(1))
-
-    return images
-
-
-def file_or_default(path: str, default: str) -> str:
+def file_or_default(path: Path, default: Path) -> str:
     """
     Return `path` if it exists, or `default` if not.
 
@@ -97,16 +68,37 @@ def file_or_default(path: str, default: str) -> str:
     path:    path to file to test
     default: default file
     """
-    if os.path.isfile(path):
+    if path.is_file():
         return path
 
-    if not os.path.isfile(default):
-        abort(f'Default file {default} does not exist or is not a file.')
+    if not default.is_file():
+        raise Exception(
+            f"Default file {default} does not exist or is not a file."
+        )
 
     return default
 
 
-def maybe_file(path: str) -> Sequence[str]:
+def optional_path(filename: str, dir: str) -> Optional[Path]:
+    """
+    Look for the specified filename in directory <dir>, returning a Path
+    object or None. The <dir> argument is second to faciliate partial
+    application via functools.partial().
+    """
+    p = Path(dir, filename)
+    return p if p.exists() and p.is_file() else None
+
+
+def path_glob(pattern: str, dir: str) -> Seq[Path]:
+    """
+    Expand the specified glob pattern in directory <dir>, returning a sequence
+    of Path objects (which might be empty). The <dir> argument is second to
+    faciliate partial application via functools.partial().
+    """
+    return list(Path(dir).glob(pattern))
+
+
+def maybe_file(path: str) -> Seq[str]:
     """
     Intended to be used when creating a list of files, this function
     determines whether a file exists, returning the file name in a list if
@@ -120,41 +112,6 @@ def maybe_file(path: str) -> Sequence[str]:
         return [path]
     else:
         return []
-
-
-def alert(message: str) -> None:
-    """
-    Issue an alert message, which is prefixed and word-wrapped.
-
-    :param message:
-    :return:
-    """
-    print(_alert_wrapper.fill(f'{_ALERT_PREFIX}{message}'), file=sys.stderr)
-
-
-def msg(message: str) -> None:
-    """
-    Display a message on standard error. Automatically adds a newline.
-    I could just use print(), but this approach allows for adding a prefix
-    later, if I feel like it.
-
-    Parameters:
-
-    message: the message to display
-    """
-    print(message, file=sys.stderr)
-
-
-def abort(message: str) -> None:
-    """
-    Aborts with a message.
-
-    Parameters:
-
-    message: the message
-    """
-    msg(message)
-    sys.exit(1)
 
 
 def sh(command: str) -> None:
@@ -184,7 +141,7 @@ def load_metadata(metadata_file: str) -> Dict[str, Any]:
     metadata_file; path to the file to load
     """
     if os.path.exists(metadata_file):
-        with open_file(metadata_file, mode='r') as f:
+        with open(metadata_file, mode='r') as f:
             s = ''.join([s for s in f if not s.startswith('---')])
             metadata = yaml.load(s, Loader=yaml.FullLoader)
     else:
@@ -263,8 +220,8 @@ def target_dir_for(file: str,
 @contextmanager
 def preprocess_markdown(
         tmp_dir: str,
-        files: Sequence[str],
-        divs: bool = False) -> Generator[Sequence[str], None, None]:
+        files: Seq[str],
+        divs: bool = False) -> Generator[Seq[str], None, None]:
     """
     Content manager that preprocesses the Markdown files, adding some content
     and producing new, individual files.
@@ -308,7 +265,7 @@ def preprocess_markdown(
         yield generated
 
 
-def rm_rf(paths: Union[str, Sequence[str]], silent: bool = False) -> None:
+def rm_rf(paths: Union[str, Seq[str]], silent: bool = False) -> None:
     """
     Recursively remove one or more files.
 
@@ -333,7 +290,7 @@ def rm_rf(paths: Union[str, Sequence[str]], silent: bool = False) -> None:
         raise TaskError('rm_f() expects a list, a tuple or a string.')
 
 
-def find_in_path(command: str) -> str:
+def find_in_path(command: str) -> Optional[str]:
     """
     Find a command in the path, or bail.
 
@@ -346,7 +303,7 @@ def find_in_path(command: str) -> str:
         if os.path.isfile(p) and os.access(p, os.X_OK):
             return p
     else:
-        raise OSError(f"""Can't find "{command}" in PATH.""")
+        return None
 
 
 def mkdirp(directory: str) -> None:
@@ -360,7 +317,7 @@ def mkdirp(directory: str) -> None:
         os.makedirs(directory)
 
 
-def rm_f(paths: Union[Sequence[str], str], silent: bool = False) -> None:
+def rm_f(paths: Union[Seq[str], str], silent: bool = False) -> None:
     """
     Remove one or more files.
 
@@ -383,7 +340,7 @@ def rm_f(paths: Union[Sequence[str], str], silent: bool = False) -> None:
         raise TaskError('rm_f() expects a list, a tuple or a string.')
 
 
-def fix_epub(epub: str, book_title: str, temp_dir: str) -> None:
+def fix_epub(epub: str, book_title: str, temp_dir: str, logger: logging.Logger) -> None:
     """
     Make some adjustments to the generated tables of contents in the ePub,
     removing empty elements and removing items matching the book title.
