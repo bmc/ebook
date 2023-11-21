@@ -334,8 +334,7 @@ must adhere to the following conventions:
 - If you want to include an author biography, just create `author.md`.
 
 - If you need a references (bibliography) section, create `references.yaml`,
-  as described below. If you don't need a bibliography section, just delete
-  the provided sample `references.yaml`.
+  as described below. See the provided sample `references.yaml` as an example.
 
 **NOTE**: There's currently no support for generating an index.
 
