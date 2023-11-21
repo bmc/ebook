@@ -120,6 +120,8 @@ startup file):
 export EBOOK_ETC_DIR=$HOME/etc/ebook
 ```
 
+You don't have to be _in_ the repo directory to run the `install.py` program.
+
 ### Uninstalling
 
 Simply run
@@ -127,6 +129,9 @@ Simply run
 ```shell
 $ python install.py -u
 ```
+
+**NOTE**: Uninstalling does *not* remove the pip-installed third party Python
+packages that were installed.
 
 ### Windows Support
 
