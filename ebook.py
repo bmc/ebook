@@ -355,7 +355,8 @@ def preprocess_markdown(
 ) -> Generator[Seq[Path], None, None]:
     """
     Content manager that preprocesses the Markdown files, adding some content
-    and producing new, individual files.
+    and producing new, individual files. These files should be used to generate
+    the book, rather than the original user-supplied ones.
 
     Parameters:
 
@@ -375,7 +376,8 @@ def preprocess_markdown(
     with ensure_dir(directory, autoremove=True):
         for f, temp in from_to:
             with open(temp, mode="w") as t:
-                basefile, ext = os.path.splitext(os.path.basename(f))
+                basefile = f.name
+                ext = f.suffix
                 m = file_without_dashes.match(basefile)
                 if m:
                     cls = m.group(1)
@@ -385,13 +387,14 @@ def preprocess_markdown(
                 # Added classes to each section. Can be used in CSS.
                 if divs and ext == ".md":
                     t.write(f'<div class="book_section" id="section_{cls}">\n')
-                with open(f, mode='r') as input_file:
+                with open(f, mode='r', encoding='utf-8') as input_file:
                     for line in input_file.readlines():
-                        t.write(f"{line.rstrip()}\n")
+                        print(line.rstrip(), file=t)
+
                 # Force a newline after each file.
                 t.write("\n")
                 if divs and ext == ".md":
-                    t.write('</div>\n')
+                    print('</div>', file=t)
                 t.close()
 
         if build_data.source_paths.references_yaml is not None:
@@ -621,6 +624,9 @@ def make_html_body_include(build_data: BuildData) -> None:
     """
     Create the body include for HTML output, which is where the cover page
     image (if any) goes. The output is written to build_data.html_body_include.
+    If there's no cover image, then the generated file will be empty. The
+    template used is in the etc/files directory (body_include.html). It's
+    a string.Template-compatible template.
     """
     import base64
     with open(build_data.html_body_include, mode='w', encoding='utf-8') as out:
@@ -795,7 +801,7 @@ def fix_epub(epub: Path,
                 lines = [l.rstrip() for l in f.readlines()]
             with open(path, mode="w", encoding="utf-8") as f:
                 for line in lines:
-                    m = title_pat.match(line)
+                    m = title_pat.search(line)
                     if m:
                         line = f'{m.group(1)}{title}{m.group(2)}'
                     f.write(f'{line}\n')
@@ -853,6 +859,9 @@ def prepare_build(book_dir: Path,
     images, creating a temporary work directory, ensuring that the final
     build directory exists, etc.
 
+    After the context exits, the temporary work directory is removed, so all
+    build work must occur within the context.
+
     Parameters:
 
     book_dir - the directory containing the book's sources
@@ -861,7 +870,7 @@ def prepare_build(book_dir: Path,
 
     Yields:
 
-    A BuildData object
+    A BuildData object.
     """
     pandoc = locate_pandoc(logger)
     build_dir = build_directory(book_dir)
