@@ -1,5 +1,14 @@
 # ebook-template
 
+**Warning**: This tooling is deprecated. I'm working on a similar tool
+that is separately installed and doesn't need to be colocated with your
+book source. Currently, that tooling is on the 
+[v2](https://github.com/bmc/ebook-template/tree/v2) branch, but I will
+likely move it to a separate repository _or_ rename this repository, once
+I'm ready to release it.
+
+In any case, *the 0.8.0 version of this tooling is no longer maintained.*
+
 ## Overview
 
 This repository is a template for a project that'll build an eBook (in
