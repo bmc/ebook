@@ -1,4 +1,3 @@
-grizzled-python==2.2.0
 panflute==2.3.0
-weasyprint==59.0
-click==8.1.3
+weasyprint==60.1
+click==8.1.7
