@@ -1,3 +1,8 @@
+# NOTE: For ePub generation, you should at least include the metadata
+# specified at https://pandoc.org/MANUAL.html#epubs
+#
+# For additional metadata supported by this tool, see the README.
+
 copyright:
   owner: Joe Horrid
   year: 2017
