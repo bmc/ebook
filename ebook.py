@@ -22,16 +22,18 @@ import sys
 import os
 from glob import glob
 from string import Template
-import codecs
+import re
 import logging
 import click
 from tempfile import TemporaryDirectory
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from pathlib import Path
-from pprint import pprint
 import yaml
+import shutil
 from enum import Enum, auto as enum_auto
-from typing import Optional, Sequence as Seq, Self
+from contextlib import contextmanager, chdir
+from typing import Optional, Sequence as Seq, Self, Dict, Any
+from collections.abc import Generator
 
 sys.path.insert(0, os.path.dirname(__file__))
 from lib import *
@@ -45,102 +47,9 @@ if tuple(sys.version_info) < (3, 10):
 # Constants
 # ---------------------------------------------------------------------------
 
-VERSION = "0.8.0"
+VERSION = "2.0.0"
 
 LOG_LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
-
-BOOK_SRC_DIR = 'book'
-TMP_DIR  = 'tmp'
-
-BUILD_FILE = 'build'
-BUILD_LIB  = 'lib/__init__.py'
-
-# Generated files
-
-OUTPUT_BASENAME            = 'book'
-
-EPUB_METADATA              = os.path.join(TMP_DIR, 'epub-metadata.xml')
-LATEX_COVER_PAGE           = os.path.join(TMP_DIR, 'latex-title.latex')
-
-OUTPUT_HTML                = f'{OUTPUT_BASENAME}.html'
-OUTPUT_PDF                 = f'{OUTPUT_BASENAME}.pdf'
-OUTPUT_EPUB                = f'{OUTPUT_BASENAME}.epub'
-OUTPUT_DOCX                = f'{OUTPUT_BASENAME}.docx'
-OUTPUT_LATEX               = f'{OUTPUT_BASENAME}.latex'
-OUTPUT_JSON                = f'{OUTPUT_BASENAME}.json'
-
-COMBINED_METADATA          = os.path.join(TMP_DIR, 'metadata.yaml')
-HTML_BODY_INCLUDE          = os.path.join(TMP_DIR, 'body_include.html')
-
-# Input files
-
-# HTML_HEAD_INCLUDE          = os.path.join(FILES_DIR, "head_include.html")
-# HTML_BODY_INCLUDE_TEMPLATE = os.path.join(FILES_DIR, 'body_include.html')
-
-# EPUB_METADATA_TEMPLATE     = os.path.join(FILES_DIR, 'epub-metadata.xml')
-
-# LATEX_COVER_PAGE_TEMPLATE  = os.path.join(FILES_DIR, 'cover-page.latex')
-# LATEX_METADATA_YAML        = os.path.join(FILES_DIR, 'latex-metadata.yaml')
-# REFERENCES_YAML            = os.path.join(BOOK_SRC_DIR, 'references.yaml')
-# REFERENCES                 = os.path.join(FILES_DIR, 'references.md')
-# METADATA_YAML              = os.path.join(BOOK_SRC_DIR, 'metadata.yaml')
-
-# metadata                   = load_metadata(METADATA_YAML)
-# uses_references            = os.path.exists(REFERENCES_YAML)
-# use_weasyprint             = metadata.get('use_weasyprint', False)
-
-# COVER_IMAGE                = os.path.join(BOOK_SRC_DIR, 'cover.png')
-# COVER_IMAGE_PDF            = os.path.join(BOOK_SRC_DIR, 'cover-pdf.png')
-# CHAPTERS                   = sorted(glob(os.path.join(BOOK_SRC_DIR, 'chapter-*.md')))
-# COPYRIGHT                  = os.path.join(BOOK_SRC_DIR, 'copyright.md')
-# LATEX_HEADER               = os.path.join(FILES_DIR, 'header.latex')
-# APPENDICES                 = glob(os.path.join(BOOK_SRC_DIR, 'appendix-*.md'))
-
-# BOOK_FILE_LIST    = (
-#     [COMBINED_METADATA, COPYRIGHT] +
-#     maybe_file(os.path.join(BOOK_SRC_DIR, 'dedication.md')) +
-#     maybe_file(os.path.join(BOOK_SRC_DIR, 'foreward.md')) +
-#     maybe_file(os.path.join(BOOK_SRC_DIR, 'preface.md')) +
-#     maybe_file(os.path.join(BOOK_SRC_DIR, 'prologue.md')) +
-#     CHAPTERS +
-#     maybe_file(os.path.join(BOOK_SRC_DIR, 'epilogue.md')) +
-#     maybe_file(os.path.join(BOOK_SRC_DIR, 'acknowledgments.md')) +
-#     APPENDICES +
-#     maybe_file(os.path.join(BOOK_SRC_DIR, 'glossary.md')) +
-#     maybe_file(os.path.join(BOOK_SRC_DIR, 'author.md')) +
-#     ([REFERENCES] if uses_references else [])
-# )
-
-#PANDOC_FILTER      = Path('scripts', 'pandoc-filter.py')
-
-#LOCAL_IMAGES       = find_local_images(BOOK_FILE_LIST)
-
-#HTML_CSS           = file_or_default(os.path.join(BOOK_SRC_DIR, 'html.css'),
-#                                     os.path.join(FILES_DIR, 'html.css'))
-#EPUB_CSS           = file_or_default(os.path.join(BOOK_SRC_DIR, 'epub.css'),
-#                                     os.path.join(FILES_DIR, 'epub.css'))
-## When generating PDF from HTML via weasyprint.
-#HTML_PDF_CSS       = file_or_default(os.path.join(BOOK_SRC_DIR, 'html-pdf.css'),
-#                                     os.path.join(FILES_DIR, 'html-pdf.css'))
-#LATEX_TEMPLATE     = os.path.join(FILES_DIR, 'latex.template')
-#REF_DOCX           = os.path.join(FILES_DIR, 'custom-reference.docx')
-#PLANTUML_FILTER    = os.path.join('scripts', 'plantuml-filter.py')
-#
-## Lists of dependencies, for ease of reference.
-#BUILD_FILE_DEPS = [BUILD_FILE, BUILD_LIB]
-#METADATA_DEPS = (
-#    [METADATA_YAML, LATEX_METADATA_YAML] +
-#    ([REFERENCES_YAML] if uses_references else [])
-#)
-#
-#DEPS          = (BOOK_FILE_LIST + BUILD_FILE_DEPS + LOCAL_IMAGES +
-#                 [PANDOC_FILTER, COMBINED_METADATA])
-#EPUB_DEPS     = DEPS + [EPUB_METADATA, COVER_IMAGE, EPUB_CSS]
-#HTML_DEPS     = DEPS + [HTML_CSS, HTML_BODY_INCLUDE]
-#LATEX_DEPS    = DEPS + [LATEX_COVER_PAGE, LATEX_TEMPLATE,
-#                        LATEX_HEADER, LATEX_METADATA_YAML]
-#DOCX_DEPS     = DEPS + [REF_DOCX]
-#HTML_PDF_DEPS = DEPS + [HTML_PDF_CSS, HTML_BODY_INCLUDE]
 
 # +RTS and -RTS delimit Haskell runtime options. See
 # http://www.haskell.org/ghc/docs/6.12.2/html/users_guide/runtime-control.html
@@ -166,32 +75,6 @@ PANDOC_EXTENSIONS = (
 
 INPUT_FORMAT = f"markdown+{'+'.join(PANDOC_EXTENSIONS)}"
 
-#COMMON_PANDOC_OPTS = (
-#    f"-f {INPUT_FORMAT} {HASKELL_OPTS} -F {PANDOC_FILTER}" +
-#    (" --citeproc" if uses_references else "") +
-#    (" --standalone")
-#)
-#NON_LATEX_PANDOC_OPTS = f"{COMMON_PANDOC_OPTS} "
-#LATEX_PANDOC_OPTS = (f"{COMMON_PANDOC_OPTS} --template={LATEX_TEMPLATE} " +
-#                     f"-t latex -H {LATEX_HEADER} -B {LATEX_COVER_PAGE} " +
-#                     "--toc")
-#HTML_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t html -B {HTML_BODY_INCLUDE} ' +
-#                    f'--css={HTML_CSS} ' +
-#                    f'-H {HTML_HEAD_INCLUDE}')
-#EPUB_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t epub --toc ' +
-#                    f'--split-level=1 --css={EPUB_CSS} ' +
-#                    f'--epub-metadata={EPUB_METADATA} ' +
-#                    f'--epub-cover-image={COVER_IMAGE}')
-#DOCX_PANDOC_OPTS = f'{NON_LATEX_PANDOC_OPTS} -t docx --reference-doc={REF_DOCX}'
-#
-#HTML_PDF_PANDOC_OPTS = (f'{NON_LATEX_PANDOC_OPTS} -t html ' +
-#                        f'--css={HTML_PDF_CSS} --pdf-engine=weasyprint ' +
-#                        f'-B {HTML_BODY_INCLUDE}')
-#
-DEFAULT_LATEX_METADATA = """
-documentclass: article
-"""
-
 # ---------------------------------------------------------------------------
 # Data types and classes
 # ---------------------------------------------------------------------------
@@ -202,10 +85,11 @@ class VersionError(Exception):
 
 class OutputType(Enum):
     HTML = enum_auto()
-    LATEX = enum_auto()
+    #LATEX = enum_auto()
     PDF = enum_auto()
     WORD = enum_auto()
     EPUB = enum_auto()
+    AST = enum_auto()
 
 
 @dataclass(frozen=True)
@@ -215,7 +99,6 @@ class SourcePaths:
     directory.
     """
     metadata: Optional[Path]
-    latex_metadata: Path
     author: Optional[Path]
     preface: Optional[Path]
     prologue: Optional[Path]
@@ -228,51 +111,59 @@ class SourcePaths:
     appendices: Seq[Path]
     acknowledgements: Optional[Path]
     cover_image: Optional[Path]
-    cover_image_for_pdf: Optional[Path]
-    references: Optional[Path]
+    references_yaml: Optional[Path]
     chapters: Seq[Path]
     html_css: Path
     html_pdf_css: Path
     epub_css: Path
-    latex_template: Path
 
     @property
     def all_metadata(self: Self) -> Seq[Path]:
-        return [f for f in (self.metadata, self.latex_metadata, self.references)
+        return [f for f in (self.metadata, self.references_yaml)
                 if f is not None]
 
     @property
     def markdown_files(self: Self) -> Seq[Path]:
-        # Get the list of fields from this data class and look for any that
-        # are paths ending in ".md". This looks complicated, but it
-        # automatically adjusts to new dataclass fields.
-        def is_markdown_file(thing: Any) -> bool:
-            return isinstance(thing, Path) and thing.name.endswith(".md")
+        """
+        Return the Markdown files for the book, in the appropriate order.
+        """
+        maybe_with_nones = (
+            [self.copyright, self.dedication, self.foreward, self.preface,
+             self.prologue] +
+            self.chapters +
+            [self.epilogue, self.acknowledgements] +
+            self.appendices +
+            [self.glossary, self.author]
+        )
+        return [p for p in maybe_with_nones if p is not None]
 
-        self_fields = fields(self)
-        markdown_files = []
-        for f in self_fields:
-            field_value = getattr(self, f.name)
-            if field_value is None:
-                continue
 
-            if is_markdown_file(field_value):
-                markdown_files.append(field_value)
-                continue
+@dataclass(frozen=True)
+class BuildData:
+    source_paths: SourcePaths
+    book_dir: Path
+    build_dir: Path
+    etc_dir: Path
+    files_dir: Path
+    scripts_dir: Path
+    pandoc: Path
+    temp_dir: Path
+    combined_metadata: str
+    image_references: Seq[Path]
+    html_body_include: Path
 
-            if isinstance(field_value, list):
-                for thing in field_value:
-                    if is_markdown_file(thing):
-                        markdown_files.append(thing)
-
-        return sorted(markdown_files)
-
+    @property
+    def markdown_files(self: Self) -> Seq[Path]:
+        """
+        Return the list of Markdown files to be processed.
+        """
+        return [self.combined_metadata] + self.source_paths.markdown_files
 
 # ---------------------------------------------------------------------------
 # Functions
 # ---------------------------------------------------------------------------
 
-def configure_logging(s_level: str, path: Optional[str] = None) -> logging.Logger:
+def _configure_logging(s_level: str, path: Optional[str] = None) -> logging.Logger:
     """
     Configure the Python logging subsystem. The returned
     logger will log to standard output and, optionally,
@@ -318,320 +209,97 @@ def configure_logging(s_level: str, path: Optional[str] = None) -> logging.Logge
 
     return logger
 
-# ---------------------------------------------------------------------------
-# Tasks
-# ---------------------------------------------------------------------------
 
-DOIT_DB = 'doit-db.json'
+def _file_or_default(path: Path, default: Path) -> str:
+    """
+    Return `path` if it exists, or `default` if not.
 
-DEFAULT_TASKS = ['html', 'pdf', 'docx', 'epub']
+    Parameters:
 
-DOIT_CONFIG = {
-    'default_tasks': DEFAULT_TASKS,
-    'backend': 'json',
-    'dep_file': DOIT_DB
-}
+    path:    path to file to test
+    default: default file
+    """
+    if path.is_file():
+        return path
 
-def task_version():
-    '''
-    Display the version of this tooling.
-    '''
-    def run(targets):
-        msg(f"eBook generation tooling, version {VERSION}")
+    if not default.is_file():
+        raise Exception(
+            f"Default file {default} does not exist or is not a file."
+        )
 
-    return {
-        'actions': [run]
-    }
-
-def task_all():
-    '''
-    Convenient way to generate all default book formats.
-    '''
-    return {
-        'actions':  [_no_op],
-        'task_dep': DEFAULT_TASKS
-    }
-
-def task_clobber():
-    '''
-    Convenient way to run: ./build clean -a
-    '''
-    def run(targets):
-        sh('./build clean -a')
-        rm_f(glob('*.bak'))
-        rm_rf('__pycache__')
-        rm_rf('lib/__pycache__')
-        rm_rf(f'{BOOK_SRC_DIR}__pycache__')
-        rm_rf('tmp')
-
-    return {
-        'actions': [run]
-    }
-
-def task_html(pandoc_path: str) -> Dict[str, Any]:
-    '''
-    Generate HTML output.
-    '''
-    def run(targets):
-        with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST, divs=True) as files:
-            files_str = ' '.join(files)
-            sh(f"{pandoc_path} {HTML_PANDOC_OPTS} -o {targets[0]} {files_str} ")
-
-    return {
-        'actions': [run],
-        'file_dep': HTML_DEPS,
-        'targets': [OUTPUT_HTML],
-        'clean':   True
-    }
-
-def task_html_body_include():
-    '''
-    Generate the HTML embedded cover image.
-    '''
-    def run(targets):
-        import base64
-        with target_dir_for(HTML_BODY_INCLUDE):
-            with open(HTML_BODY_INCLUDE, 'w') as out:
-                with open(COVER_IMAGE, 'rb') as img:
-                    image_bytes = img.read()
-
-                b64_bytes = base64.encodebytes(image_bytes)
-                b64_str = ''.join(chr(b) for b in b64_bytes).replace('\n', '')
-                with open(HTML_BODY_INCLUDE_TEMPLATE) as template:
-                    data = {'base64_image': b64_str}
-                    out.write(Template(template.read()).substitute(data))
-
-    return {
-        'actions':  [run],
-        'file_dep': [COVER_IMAGE, HTML_BODY_INCLUDE_TEMPLATE] + BUILD_FILE_DEPS,
-        'targets':  [HTML_BODY_INCLUDE],
-        'clean':    True
-    }
+    return default
 
 
-def task_pdf():
-    '''
-    Generate PDF output.
-    '''
-    def run(targets):
-        with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
-            files_str = ' '.join(files)
-            target = targets[0]
-            sh(f'{PANDOC} {HTML_PDF_PANDOC_OPTS} -o {target} {files_str}')
+def _optional_path(filename: str, dir: str) -> Optional[Path]:
+    """
+    Look for the specified filename in directory <dir>, returning a Path
+    object or None. The <dir> argument is second to faciliate partial
+    application via functools.partial().
+    """
+    p = Path(dir, filename)
+    return p if p.exists() and p.is_file() else None
 
 
-    if use_weasyprint:
-        return {
-            'actions':  [run],
-            'file_dep': HTML_PDF_DEPS,
-            'targets':  [OUTPUT_PDF],
-            'clean':    True,
-        }
+def _path_glob(pattern: str, dir: str) -> Seq[Path]:
+    """
+    Expand the specified glob pattern in directory <dir>, returning a sequence
+    of Path objects (which might be empty). The <dir> argument is second to
+    faciliate partial application via functools.partial().
+    """
+    return list(Path(dir).glob(pattern))
+
+
+def _sh(command: str, logger: logging.Logger) -> None:
+    """
+    Runs a shell command, exiting if the command fails.
+
+    Parameters:
+
+    command: the command to run
+    """
+    import subprocess
+    logger.debug(command)
+    rc = subprocess.call(command, shell=True)
+    if rc < 0:
+        raise OSError(f'Command aborted by signal {-rc}')
+
+
+def _find_in_path(command: str) -> Optional[str]:
+    """
+    Find a command in the path, or bail.
+
+    :param command:  the command to find
+    :return: the location. Throws an exception otherwise.
+    """
+    path = [p for p in os.getenv('PATH', '').split(os.pathsep) if len(p) > 0]
+    for d in path:
+        p = os.path.join(d, command)
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            return p
     else:
-        return {
-            'actions': [(_latex, [OUTPUT_PDF])],
-            'file_dep': LATEX_DEPS,
-            'targets': [OUTPUT_PDF],
-            'clean':   True
-        }
-
-def task_latex():
-    '''
-    Generate LaTeX output (for debugging).
-    '''
-    return {
-        'actions': [(_latex, [OUTPUT_LATEX])],
-        'file_dep': LATEX_DEPS,
-        'targets': [OUTPUT_LATEX],
-        'clean':   True
-    }
-
-def task_json():
-    '''
-    Generate Pandoc AST JSON, pretty-printed (for debugging).
-    '''
-    def run(targets):
-        with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
-            files_str = ' '.join(files)
-            temp = '_ast.json'
-            try:
-                sh(f'{PANDOC} {NON_LATEX_PANDOC_OPTS} -o _ast.json -t json ' +
-                   files_str)
-                with open(temp, 'r') as f:
-                    import json
-                    js = json.load(f)
-                    with open(targets[0], 'w') as out:
-                        out.write(json.dumps(js, sort_keys=False, indent=2))
-            finally:
-                rm_f(temp, silent=True)
+        return None
 
 
-    return {
-        'actions':  [run],
-        'file_dep': HTML_DEPS,
-        'targets':  [OUTPUT_JSON],
-        'clean':    True
-    }
+@contextmanager
+def _ensure_dir(directory: Path,
+                autoremove: bool = False) -> Generator[None, None, None]:
+    """
+    Run a block in the context of a directory that is created if it doesn't
+    exist.
 
-def task_docx():
-    '''
-    Generate MS Word output.
-    '''
-    def run(targets):
-        with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
-            files_str = ' '.join(files)
-            sh(f"{PANDOC} {DOCX_PANDOC_OPTS} -o {targets[0]} {files_str}")
+    Parameters:
 
-    return {
-        'actions': [run],
-        'file_dep': DOCX_DEPS,
-        'targets': [OUTPUT_DOCX],
-        'clean':   True
-    }
+    dir:   the directory
+    remove: if True, remove the directory when the "with" block finishes.
+    """
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        yield
+    finally:
+        if autoremove:
+            if directory.exists():
+                shutil.rmtree(str(directory))
 
-def task_epub():
-    '''
-    Generate ePub output.
-    '''
-
-    def run(targets):
-        markdown = [f for f in BOOK_FILE_LIST if f.endswith(".md")]
-        yamls = [f for f in BOOK_FILE_LIST if f.endswith(".yaml")]
-        with preprocess_markdown(TMP_DIR, markdown) as files:
-            files_str = ' '.join(yamls + files)
-            alert('Ignore any Pandoc warnings about "title" or "pagetitle".')
-            sh(f'{PANDOC} {EPUB_PANDOC_OPTS} -o {targets[0]} {files_str}')
-            fix_epub(epub=targets[0],
-                     book_title=metadata['title'],
-                     temp_dir=os.path.join(TMP_DIR, 'book-epub'))
-
-    return {
-        'actions': [run],
-        'file_dep': EPUB_DEPS,
-        'targets': [OUTPUT_EPUB],
-        'clean':   True
-    }
-
-def task_latex_title():
-    '''
-    Generate LaTeX title file.
-    '''
-    # Note: The following requires a custom LaTeX template with
-    # \usepackage{graphicx} in the preamble.
-    def run(targets):
-        with target_dir_for(LATEX_COVER_PAGE):
-            with open(LATEX_COVER_PAGE_TEMPLATE) as template:
-                with open(LATEX_COVER_PAGE, 'w') as out:
-                    data = {'cover_image': COVER_IMAGE}
-                    out.write(Template(template.read()).substitute(data))
-
-    return {
-        'actions':  [run],
-        'file_dep': BUILD_FILE_DEPS + [LATEX_COVER_PAGE_TEMPLATE, COVER_IMAGE],
-        'targets':  [LATEX_COVER_PAGE],
-        'clean':    True
-    }
-
-def task_combined_metadata():
-    '''
-    Generate the consolidated metadata file.
-    '''
-    def run(targets):
-        target = targets[0]
-        with target_dir_for(target):
-            with open(target, 'w') as out:
-                for f in METADATA_DEPS:
-                    if not os.path.exists(f):
-                        continue
-
-                    out.write('---\n')
-                    with codecs.open(f, 'r', encoding='UTF-8') as input:
-                        for line in input.readlines():
-                            out.write(line)
-                    out.write('...\n\n')
-
-                # Special cases. Put these at the bottom. Pandoc will
-                # ignore them if they're already specified (i.e., first one
-                # wins, according to the Pandoc documentation).
-
-                out.write('---\n')
-                language = metadata.get('language', 'en-US')
-                out.write('lang: {}\n'.format(language.split('-')[0]))
-                out.write('...\n\n')
-
-    return {
-        'actions':  [run],
-        'file_dep': BUILD_FILE_DEPS + METADATA_DEPS,
-        'targets':  [COMBINED_METADATA],
-        'clean':    True
-    }
-
-def task_epub_metadata():
-    '''
-    Generate the ePub metadata file.
-    '''
-    def run(targets):
-        import io
-        with open(targets[0], 'w') as out:
-            with open(EPUB_METADATA_TEMPLATE, 'r') as input:
-                template = ''.join(input.readlines())
-
-            identifier = metadata.get('identifier', {}).get('text', '')
-            scheme = metadata.get('identifier', {}).get('scheme', '')
-            copyright = metadata['copyright']
-            data = {
-                'identifier':        identifier,
-                'identifier_scheme': scheme,
-                'copyright_owner':   copyright['owner'],
-                'copyright_year':    copyright['year'],
-                'publisher':         metadata['publisher'],
-                'language':          metadata.get('language', 'en-US'),
-                'genre':             metadata.get('genre', '')
-            }
-            sbuf = io.StringIO(Template(template).substitute(data))
-            for line in sbuf.readlines():
-                if not identifier and line.strip().startswith('<dc:identifier'):
-                    continue
-                out.write(line)
-
-    return {
-        'actions':  [run],
-        'file_dep': ([EPUB_METADATA_TEMPLATE, COMBINED_METADATA] +
-                     BUILD_FILE_DEPS),
-        'targets':  [EPUB_METADATA],
-        'clean':    True
-    }
-
-def task_combined():
-    '''
-    Generated one big combined Markdown file (for debugging).
-    '''
-    def run(targets):
-        target = targets[0]
-        msg(f"Generating {target}.")
-
-        with target_dir_for(target):
-            with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
-                with open(target, 'w') as out:
-                    for f in files:
-                        with open(f, 'r') as input:
-                            copyfileobj(input, out)
-
-    return {
-        'actions':  [run],
-        'file_dep': DEPS,
-        'targets':  [os.path.join(TMP_DIR, 'temp.md')],
-        'clean':    True
-    }
-
-# ---------------------------------------------------------------------------
-# Helper functions
-# ---------------------------------------------------------------------------
-
-def _pandoc_options(sources: SourcePaths, output_type: OutputType) -> str:
-    common = (
-        f"-f {INPUT_FORMAT} {HASKELL_OPTS} -F"
-    )
 
 def _combine_metadata(tempdir: str,
                       sources: SourcePaths,
@@ -667,16 +335,6 @@ def _combine_metadata(tempdir: str,
 
     return combined_metadata_path
 
-def _latex(target):
-    with preprocess_markdown(TMP_DIR, BOOK_FILE_LIST) as files:
-        files_str = ' '.join(files)
-        sh(f"pandoc {LATEX_PANDOC_OPTS} -o {target} {files_str}")
-
-
-def _make_epub() -> None:
-    pass
-
-
 def _make_temp_file(name: str, contents: str, tempdir: Path) -> Path:
     """
     Write the specified contents (presumably a string with multiple lines)
@@ -688,6 +346,64 @@ def _make_temp_file(name: str, contents: str, tempdir: Path) -> Path:
         f.write(contents)
 
     return path
+
+@contextmanager
+def _preprocess_markdown(
+    build_data: BuildData,
+    divs: bool = False
+) -> Generator[Seq[Path], None, None]:
+    """
+    Content manager that preprocesses the Markdown files, adding some content
+    and producing new, individual files.
+
+    Parameters:
+
+    build_data - the build data
+    divs       - True to generate a <div> with a file-based "id" attribute and
+                 'class="book_section"' around each Markdown file. Only really
+                 useful for HTML.
+
+    Yields the paths to the generated files
+    """
+    file_without_dashes = re.compile(r'^[^a-z]*([a-z]+).*$')
+
+    directory = Path(build_data.temp_dir, 'preprocessed')
+    from_to = [(f, Path(directory, Path(f).name))
+               for f in build_data.markdown_files]
+    generated = [t for _, t in from_to]
+    with _ensure_dir(directory, autoremove=True):
+        for f, temp in from_to:
+            with open(temp, mode="w") as t:
+                basefile, ext = os.path.splitext(os.path.basename(f))
+                m = file_without_dashes.match(basefile)
+                if m:
+                    cls = m.group(1)
+                else:
+                    cls = basefile
+
+                # Added classes to each section. Can be used in CSS.
+                if divs and ext == ".md":
+                    t.write(f'<div class="book_section" id="section_{cls}">\n')
+                with open(f, mode='r') as input_file:
+                    for line in input_file.readlines():
+                        t.write(f"{line.rstrip()}\n")
+                # Force a newline after each file.
+                t.write("\n")
+                if divs and ext == ".md":
+                    t.write('</div>\n')
+                t.close()
+
+        if build_data.source_paths.references_yaml is not None:
+            # Create a temporary Markdown file (page) for the references, all
+            # the way at the end, which is where Pandoc writes them.
+            generated.append(_make_temp_file(
+                name="references.md",
+                tempdir=build_data.temp_dir,
+                contents="# References\n"
+            ))
+
+        yield generated
+
 
 def _find_local_image_references(markdown_files: Seq[Path],
                                  bookdir: Path,
@@ -723,28 +439,26 @@ def _find_local_image_references(markdown_files: Seq[Path],
                     )
                     continue
 
-                images.append(image)
+                images.append(image.absolute())
 
     return images
 
 
-def _find_sources(bookdir: Path, files_dir: Path, tempdir: Path) -> SourcePaths:
+def _find_sources(book_dir: Path,
+                  etc_dir: Path,
+                  tempdir: Path) -> SourcePaths:
     from functools import partial
 
-    opt = partial(optional_path, dir=bookdir)
-    expand = partial(path_glob, dir=bookdir)
+    book_dir = book_dir.absolute()
+    opt = partial(_optional_path, dir=book_dir)
+    expand = partial(_path_glob, dir=book_dir)
 
     def local_or_default(filename: str) -> Path:
-        return file_or_default(Path(bookdir, filename),
-                               Path(files_dir, filename))
+        return _file_or_default(Path(book_dir, filename),
+                               Path(etc_dir, filename))
 
-    if (latex_metadata := opt("latex-metadata.yaml")) is None:
-        latex_metadata = _make_temp_file("latex-metadata.yaml",
-                                         DEFAULT_LATEX_METADATA,
-                                         tempdir)
     return SourcePaths(
         metadata=opt("metadata.yaml"),
-        latex_metadata=latex_metadata,
         author=opt("author.md"),
         preface=opt("preface.md"),
         prologue=opt("prologue.md"),
@@ -757,14 +471,52 @@ def _find_sources(bookdir: Path, files_dir: Path, tempdir: Path) -> SourcePaths:
         appendices=expand("appendix-*.md"),
         acknowledgements=opt("acknowledgements.md"),
         cover_image=opt("cover.png"),
-        cover_image_for_pdf=opt("cover-pdf.png"),
         chapters=expand("chapter-*.md"),
-        references=opt("references.yaml"),
-        latex_template=local_or_default("latex.template"),
+        references_yaml=opt("references.yaml"),
         html_css=local_or_default("html.css"),
         html_pdf_css=local_or_default("html-pdf.css"),
         epub_css=local_or_default("epub.css")
     )
+
+def _pandoc_options(build_data: BuildData, output_type: OutputType) -> str:
+    pandoc_filter = Path(build_data.scripts_dir, 'pandoc-filter.py')
+    common = (
+        f"-f {INPUT_FORMAT} {HASKELL_OPTS} -F {pandoc_filter} "
+        "--standalone --citeproc"
+    )
+
+    head_include = Path(build_data.files_dir, "head_include.html")
+    html_common = (
+        f"{common} -t html "
+        f"-H {head_include} -B {build_data.html_body_include} "
+    )
+
+    match output_type:
+        case OutputType.HTML:
+            return (
+                f"{html_common} --css {build_data.source_paths.html_css} "
+            )
+
+        case OutputType.PDF:
+            return (
+                f"{html_common} --css {build_data.source_paths.html_pdf_css} "
+                f"--pdf-engine=weasyprint"
+            )
+
+        case OutputType.WORD:
+            ref = Path(build_data.files_dir, "custom-reference.docx")
+            return f"{common} -t docx --reference-doc={ref}"
+
+        case OutputType.EPUB:
+            return (
+                f"{common} -t epub --toc --split-level=1 "
+                f"--css {build_data.source_paths.epub_css} "
+                f"--epub-cover-image {build_data.source_paths.cover_image}"
+            )
+
+        case OutputType.AST:
+            ast_out = Path(build_data.build_dir, "ast.json")
+            return f"{common} -t json"
 
 
 def _check_pandoc(logger: logging.Logger) -> str:
@@ -773,7 +525,7 @@ def _check_pandoc(logger: logging.Logger) -> str:
     pandoc executable is used.
     """
     import subprocess
-    pandoc = find_in_path("pandoc")
+    pandoc = _find_in_path("pandoc")
     if pandoc is None:
         raise FileNotFoundError("Cannot location pandoc executable.")
 
@@ -817,45 +569,371 @@ def _make_build_dir(build_dir: Path, logger: logging.Logger) -> None:
         build_dir.mkdir()
 
 
-def _build_book(book_dir: Path,
-                build_dir: Path,
-                files_dir: Path,
-                logger: logging.Logger) -> None:
-    logger.debug(f'Building book in {book_dir}')
+def _make_html_body_include(build_data: BuildData) -> None:
+    import base64
+    with open(build_data.html_body_include, mode='w', encoding='utf-8') as out:
+        if build_data.source_paths.cover_image is None:
+            # Nothing to do. The template is just for a cover image.
+            pass
+        else:
+            with open(build_data.source_paths.cover_image, mode='rb') as img:
+                image_bytes = img.read()
+
+            b64_bytes = base64.encodebytes(image_bytes)
+            b64_str = ''.join(chr(b) for b in b64_bytes).replace('\n', '')
+            with open(Path(build_data.files_dir, 'body_include.html'),
+                      mode='r', encoding='utf-8') as template:
+                out.write(Template(template.read()).substitute({
+                    "base64_image": b64_str
+                }))
+
+def _fix_epub(epub: Path,
+              build_data: BuildData,
+              book_title: str,
+              logger: logging.Logger) -> None:
+    """
+    Make some adjustments to the generated tables of contents in the ePub,
+    removing empty elements and removing items matching the book title.
+
+    Parameters:
+
+    epub:       The path to the epub file
+    book_title: The book title
+    build_data: The build data
+    logger:     Logger
+    """
+    from zipfile import ZipFile, ZIP_DEFLATED
+    from xml.dom import minidom
+
+    temp_dir = Path(build_data.temp_dir, "epub")
+    if temp_dir.exists():
+        shutil.rmtree(temp_dir)
+
+    def zip_add(zf, path, zippath):
+        """Swiped from zipfile module."""
+        if os.path.isfile(path):
+            zf.write(path, zippath, ZIP_DEFLATED)
+        elif os.path.isdir(path):
+            if zippath:
+                zf.write(path, zippath)
+            for nm in os.listdir(path):
+                zip_add(zf,
+                        os.path.join(path, nm), os.path.join(zippath, nm))
+
+    def unpack_epub() -> None:
+        # Assumes pwd is *not* unpack directory.
+        logger.debug(f'.. Unpacking {epub}.')
+        with ZipFile(epub) as z:
+            z.extractall(temp_dir)
+
+    def repack_epub() -> None:
+        # Assumes pwd is *not* unpack directory.
+        logger.debug(f'.. Packing new {epub}.')
+        with ZipFile(epub, 'w') as z:
+            with chdir(temp_dir):
+                for f in os.listdir('.'):
+                    if f in ['..', '.']:
+                        continue
+                    zip_add(z, f, f)
+
+    def strip_text_children(element: minidom.Element) -> None:
+        for child in element.childNodes:
+            if type(child) == minidom.Text:
+                element.removeChild(child)
+
+    def get_text_children(element: minidom.Element) -> str:
+        text = None
+        if element:
+            s = ''
+            for child in element.childNodes:
+                if child and (type(child) == minidom.Text):
+                    s += child.data.strip()
+            text = s if s else None
+        return text
+
+    def fix_toc_ncx(toc: Path):
+        # Assumes pwd *is* unpack directory
+        logger.debug(f'(fix_epub) Reading table of contents file "{toc}".')
+        with open(toc, encoding="utf-8") as f:
+            toc_xml = f.read()
+
+        logger.debug("(fix_epub) Adjusting table of contents.")
+        with minidom.parseString(toc_xml) as dom:
+            nav_map = dom.getElementsByTagName('navMap')
+            if not nav_map:
+                raise Exception('Malformed table of contents: No <navMap>.')
+            nav_map = nav_map[0]
+            for p in nav_map.getElementsByTagName('navPoint'):
+                text_nodes = p.getElementsByTagName('text')
+                text = None
+                if text_nodes:
+                    text = get_text_children(text_nodes[0])
+
+                if (not text) or (text == book_title):
+                    nav_map.removeChild(p)
+
+            # Renumber the nav points.
+            for i, p in enumerate(nav_map.getElementsByTagName('navPoint')):
+                num = i + 1
+                p.setAttribute('id', f'navPoint-{num}')
+
+            # Strip any text nodes from the navmap.
+            strip_text_children(nav_map)
+
+            # Write it out.
+            with open(toc, mode="w", encoding="utf-8") as f:
+                dom.writexml(f)
+
+    def fix_nav_xhtml(toc: Path) -> None:
+        # Assumes pwd *is* unpack directory
+        logger.debug(f'(fix_epub) Reading table of contents file "{toc}".')
+        with open(toc, encoding="utf8") as f:
+            toc_xml = f.read()
+
+        logger.debug('(fix_epub) Adjusting table of contents.')
+        with minidom.parseString(toc_xml) as dom:
+            navs = dom.getElementsByTagName('nav')
+            nav = None
+            for n in navs:
+                if not n.hasAttributes():
+                    continue
+                a = n.attributes.get('id')
+                if not a:
+                    continue
+                if a.value == 'toc':
+                    nav = n
+                    break
+            else:
+                raise Exception('Malformed table of contents: No TOC <nav>.')
+
+            ol = nav.getElementsByTagName('ol')
+            if (not ol) or (len(ol) == 0):
+                raise Exception('Malformed table of contents: No list in <nav>.')
+            ol = ol[0]
+
+            for li in ol.getElementsByTagName('li'):
+                a = li.getElementsByTagName('a')
+                if not a:
+                    raise Exception('Malformed table of contents: No <a> in <li>.')
+                a = a[0]
+                text = get_text_children(a)
+                if (not text) or (text == book_title):
+                    ol.removeChild(li)
+
+            # Renumber the list items
+            for i, li in enumerate(ol.getElementsByTagName('li')):
+                num = i + 1
+                li.setAttribute('id', f'toc-li-{num}')
+
+            # Strip any text nodes from the ol.
+            strip_text_children(ol)
+
+            # Write it out.
+            with open(toc, mode='w', encoding="utf-8") as f:
+                dom.writexml(f)
+
+    def fix_chapter_files():
+        logger.debug('(fix_epub) Fixing titles in chapter files...')
+        title_pat = re.compile(r'^(.*<title>).*(</title>).*$')
+
+        def fix_chapter_file(path, title):
+            with open(path, encoding="utf-8") as f:
+                lines = [l.rstrip() for l in f.readlines()]
+            with open(path, mode="w", encoding="utf-8") as f:
+                for line in lines:
+                    m = title_pat.match(line)
+                    if m:
+                        line = f'{m.group(1)}{title}{m.group(2)}'
+                    f.write(f'{line}\n')
+
+        for file in glob('EPUB/text/ch*.xhtml'):
+            fix_chapter_file(file, title=book_title)
+
+    # Main logic
+    try:
+        unpack_epub()
+        with _ensure_dir(temp_dir):
+            with chdir(temp_dir):
+                paths_and_funcs = (
+                    (Path('EPUB', 'toc.ncx'), fix_toc_ncx),
+                    (Path('EPUB', 'nav.xhtml'), fix_nav_xhtml),
+                )
+                for toc, func in paths_and_funcs:
+                    if not os.path.exists(toc):
+                        logger.debug(f'(fix_epub) No {toc} file. Skipping it.')
+                        continue
+                    func(toc)
+
+                fix_chapter_files()
+
+        repack_epub()
+    finally:
+        #rmtree(temp_dir)
+        pass
+
+
+def _load_metadata(metadata_file: Path) -> Dict[str, Any]:
+    """
+    Loads a YAML metadata file, returning the loaded dictionary.
+
+    Parameters:
+
+    metadata_file; path to the file to load
+    """
+    if metadata_file.exists():
+        with open(metadata_file, mode='r') as f:
+            s = ''.join([s for s in f if not s.startswith('---')])
+            metadata = yaml.load(s, Loader=yaml.FullLoader)
+    else:
+        metadata = {}
+
+    return metadata
+
+
+@contextmanager
+def _prepare_build(book_dir: Path,
+                   build_dir: Path,
+                   etc_dir: Path,
+                   logger: logging.Logger) -> Generator[BuildData, None, None]:
     pandoc = _check_pandoc(logger)
     _make_build_dir(build_dir, logger)
     with TemporaryDirectory(prefix="ebook") as tempdir_name:
         tempdir = Path(tempdir_name)
+        files_dir = Path(etc_dir, 'files')
         sources = _find_sources(book_dir, files_dir, tempdir)
-        pprint(sources)
         combined_metadata = _combine_metadata(
             tempdir=tempdir, sources=sources, logger=logger
         )
-        pprint(sources.markdown_files)
         image_references = _find_local_image_references(
             markdown_files=sources.markdown_files,
             bookdir=book_dir,
             logger=logger
         )
-        print(image_references)
-    logger.debug(f"{files_dir=} ({files_dir.absolute()})")
+        bd = BuildData(
+            source_paths=sources,
+            book_dir=book_dir.absolute(),
+            build_dir=build_dir.absolute(),
+            etc_dir=etc_dir,
+            files_dir=files_dir,
+            scripts_dir=Path(etc_dir, "scripts"),
+            pandoc=pandoc,
+            temp_dir=tempdir,
+            combined_metadata=combined_metadata,
+            image_references=image_references,
+            html_body_include=Path(tempdir, "body_include.html")
+        )
+        _make_html_body_include(bd)
+        yield bd
+
+
+def _dump_ast(book_dir: Path,
+              build_dir: Path,
+              etc_dir: Path,
+              logger: logging.Logger) -> None:
+    with _prepare_build(book_dir, build_dir, etc_dir, logger) as build_data:
+        with _preprocess_markdown(build_data) as files:
+            opts = _pandoc_options(build_data, OutputType.AST)
+            files_str = ' '.join(str(p) for p in files)
+            output = Path(build_data.build_dir, "ast.json")
+            temp_output = Path(build_data.temp_dir, "ast.json")
+            _sh(f"{build_data.pandoc} {opts} -o {temp_output} {files_str}", logger)
+            with (
+                open(temp_output, mode="r", encoding="utf-8") as temp,
+                open(output, mode="w", encoding="utf-8") as out
+            ):
+                import json
+                js = json.load(temp)
+                out.write(json.dumps(js, sort_keys=False, indent=2))
+
+def _dump_combined(book_dir: Path,
+                   build_dir: Path,
+                   etc_dir: Path,
+                   logger: logging.Logger) -> None:
+    with _prepare_build(book_dir, build_dir, etc_dir, logger) as build_data:
+        with _preprocess_markdown(build_data) as files:
+            output_path = Path(build_data.build_dir, "combined.md")
+            logger.debug(f"Writing {output_path}")
+            with open(output_path, mode="w", encoding="utf-8") as out:
+                for file in files:
+                    with open(file, mode="r", encoding="utf-8") as f:
+                        out.write(f.read())
+
+
+def _build_html_and_pdf(build_data: BuildData, logger: logging.Logger) -> None:
+    # HTML and PDF are identical, except for the options. Handle
+    # them identically.
+    with _preprocess_markdown(build_data=build_data, divs=True) as files:
+        files_str = ' '.join(str(p) for p in files)
+        for (output_type, extension) in [(OutputType.HTML, ".html"),
+                                        (OutputType.PDF, ".pdf")]:
+            output_path = Path(build_data.build_dir, f"book{extension}")
+            logger.info(f'Building "{output_path}"')
+            opts = _pandoc_options(build_data, output_type)
+            with chdir(build_data.book_dir):
+                _sh(f"{build_data.pandoc} {opts} -o {output_path} {files_str}",
+                logger)
+
+    # HTML will want the images, so copy them into the output directory.
+    with chdir(build_data.book_dir):
+        for img in build_data.image_references:
+            target = Path(build_data.build_dir, img.name)
+            logger.debug(f"Copying: {img} -> {target}")
+            shutil.copyfile(img, target)
+
+
+def _build_docx(build_data: BuildData, logger: logging.Logger) -> None:
+    with _preprocess_markdown(build_data=build_data) as files:
+        files_str = ' '.join(str(p) for p in files)
+        output_path = Path(build_data.build_dir, "book.docx")
+        logger.info(f'Building "{output_path}"')
+        opts = _pandoc_options(build_data, OutputType.WORD)
+        with chdir(build_data.book_dir):
+            _sh(f"{build_data.pandoc} {opts} -o {output_path} {files_str}",
+               logger)
+
+
+def _build_epub(build_data: BuildData, logger: logging.Logger) -> None:
+    with _preprocess_markdown(build_data=build_data) as files:
+        files_str = ' '.join(str(p) for p in files)
+        output_path = Path(build_data.build_dir, "book.epub")
+        logger.info(f'Building "{output_path}"')
+        opts = _pandoc_options(build_data, OutputType.EPUB)
+        metadata = _load_metadata(build_data.source_paths.metadata)
+        with chdir(build_data.book_dir):
+            _sh(f"{build_data.pandoc} {opts} -o {output_path} {files_str}",
+               logger)
+            _fix_epub(epub=output_path,
+                      build_data=build_data,
+                      book_title=metadata.get("title", ""),
+                      logger=logger)
+
+
+
+def _build_book(book_dir: Path,
+                build_dir: Path,
+                etc_dir: Path,
+                logger: logging.Logger) -> None:
+    with _prepare_build(book_dir, build_dir, etc_dir, logger) as build_data:
+        _build_html_and_pdf(build_data, logger)
+        _build_docx(build_data, logger)
+        _build_epub(build_data, logger)
 
 def _clean_output(book_dir: Path,
                   build_dir: Path,
                   logger: logging.Logger) -> None:
     if build_dir.exists():
         import shutil
-        logger.debug(f"+ rm -rf {build_dir}")
+        logger.debug(f'Removing "{build_dir}" and its contents.')
         shutil.rmtree(build_dir)
 
 
 @click.command("build")
-@click.option("-f", "--files-dir", default=None, envvar="EBOOK_FILES_DIR",
+@click.option("-e", "--etc-dir", default=None, envvar="EBOOK_ETC_DIR",
               required=True,
               type=click.Path(dir_okay=True, file_okay=False, exists=True),
-              help="Path to directory containing ebook's default templates and "
-                   "other configuration files. If not specified, the value "
-                   "of the EBOOK_FILES_DIR environment variable is used.")
+              help="Path to directory containing ebook's default templates, "
+                   "scripts, and other files. If not specified, the value "
+                   "of the EBOOK_ETC_DIR environment variable is used.")
 @click.option("-l", "--log-level", default="INFO",
               type=click.Choice(LOG_LEVELS, case_sensitive=False),
               help="Specify log level.",
@@ -867,9 +945,9 @@ def _clean_output(book_dir: Path,
                 type=click.Path(dir_okay=True, file_okay=False,
                                 writable=True, exists=True))
 @click.argument("target", required=False,
-                type=click.Choice(("clean", "build")),
+                type=click.Choice(("clean", "build", "ast", "combined")),
                 default="build")
-def run_build(files_dir: Optional[str],
+def run_build(etc_dir: str,
               log_level: str,
               log_path: Optional[str],
               bookdir: str,
@@ -877,21 +955,29 @@ def run_build(files_dir: Optional[str],
     """
     Build the ebook. BOOKDIR is the directory containing your book's
     sources. The output will be created in a "build" subdirectory.
-    TARGET is the build target, one of "build" or "clean". Note that you
+    TARGET is the build target, as described below. Note that you
     must have properly installed the program (via the ./install.sh script
     in the source repository) first.
 
-    Valid targets:
+    Valid build targets:
 
-    clean: Clean up (remove) all built artifacts
+    clean: Clean up (remove) all built artifacts from BOOKDIR/build.
 
-    build: Build all versions of the book (PDF, Epub, HTML, etc.)
+    build: Build all versions of the book (PDF, Epub, HTML, etc.) in directory
+    BOOKDIR build
+
+    ast: Write the Pandoc AST (as JSON), pretty-printed, to BOOKDIR/ast.json.
+    This target is primarily for debugging this program.
+
+    combined: Write the final combined document, as fed to Pandoc, to
+    BOOKDIR/combined.md. Primarily for debugging.
 
     Default: build
     """
-    logger = configure_logging(log_level.upper(), log_path)
+    logger = _configure_logging(log_level.upper(), log_path)
     bookdir = Path(bookdir)
     build_dir = Path(bookdir, "build")
+    etc_dir = Path(etc_dir).absolute()
     match target:
         case 'clean':
             _clean_output(book_dir=bookdir,
@@ -900,8 +986,21 @@ def run_build(files_dir: Optional[str],
         case 'build':
             _build_book(book_dir=bookdir,
                         build_dir=build_dir,
-                        files_dir=Path(files_dir),
+                        etc_dir=etc_dir,
                         logger=logger)
+        case 'ast':
+            _dump_ast(book_dir=bookdir,
+                      build_dir=build_dir,
+                      etc_dir=etc_dir,
+                      logger=logger)
+
+        case 'combined':
+            _dump_combined(book_dir=bookdir,
+                           build_dir=build_dir,
+                           etc_dir=etc_dir,
+                           logger=logger)
+
+
 
 # ---------------------------------------------------------------------------
 # Main
