@@ -334,7 +334,6 @@ PDF output is generated from HTML via [Weasy Print][].
 
 - No table of contents
 
-
 ### Generating Microsoft Word
 
 The `customer-reference.docx` file in the `etc/files` directory is used
