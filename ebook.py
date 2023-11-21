@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Build script. Uses doit: http://pydoit.org/
 # ---------------------------------------------------------------------------
 # Copyright © 2017-2023 Brian M. Clapper
 #
@@ -35,11 +34,6 @@ from contextlib import contextmanager, chdir
 from typing import Optional, Sequence as Seq, Self, Dict, Any
 from collections.abc import Generator
 
-if tuple(sys.version_info) < (3, 10):
-    raise Exception(
-        f"Python version is {sys.version}, but 3.10 or better is required."
-    )
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -60,6 +54,7 @@ HASKELL_OPTS = ''
 
 # Minimum Pandoc version, expressed as a (major, minor, patch) tuple
 MIN_PANDOC_VERSION = (3, 1, 0)
+MIN_PYTHON_VERSION = (3, 10)
 
 PANDOC_EXTENSIONS = (
     "line_blocks",
@@ -106,11 +101,11 @@ class SourcePaths:
     afterward: Optional[Path]
     glossary: Optional[Path]
     copyright: Optional[Path]
-    appendices: Seq[Path]
+    appendices: list[Path]
     acknowledgements: Optional[Path]
     cover_image: Optional[Path]
     references_yaml: Optional[Path]
-    chapters: Seq[Path]
+    chapters: list[Path]
     html_css: Path
     html_pdf_css: Path
     epub_css: Path
@@ -146,8 +141,8 @@ class BuildData:
     scripts_dir: Path
     pandoc: Path
     temp_dir: Path
-    combined_metadata: str
-    image_references: Seq[Path]
+    combined_metadata: Path
+    image_references: list[Path]
     html_body_include: Path
 
     @property
@@ -155,7 +150,7 @@ class BuildData:
         """
         Return the list of Markdown files to be processed.
         """
-        return [self.combined_metadata] + self.source_paths.markdown_files
+        return list(self.source_paths.markdown_files) + [self.combined_metadata]
 
 # ---------------------------------------------------------------------------
 # Functions
@@ -177,7 +172,10 @@ def configure_logging(s_level: str, path: Optional[str] = None) -> logging.Logge
     """
     import sys
     # See https://docs.python.org/3/howto/logging.html
-    log_level = getattr(logging, s_level.upper(), None)
+    log_level: Optional[int] = getattr(logging, s_level.upper(), None)
+    if log_level is None:
+        raise Exception(f'Cannot get log level "{s_level.upper()} from '
+                        "logging package.")
 
     formatter = logging.Formatter(
         '[%(asctime)s] (%(levelname)s) %(message)s',
@@ -208,7 +206,7 @@ def configure_logging(s_level: str, path: Optional[str] = None) -> logging.Logge
     return logger
 
 
-def file_or_default(path: Path, default: Path) -> str:
+def file_or_default(path: Path, default: Path) -> Path:
     """
     Return `path` if it exists, or `default` if not.
 
@@ -228,7 +226,7 @@ def file_or_default(path: Path, default: Path) -> str:
     return default
 
 
-def optional_path(filename: str, dir: str) -> Optional[Path]:
+def optional_path(filename: str, dir: Path) -> Optional[Path]:
     """
     Look for the specified filename in directory <dir>, returning a Path
     object or None. The <dir> argument is second to faciliate partial
@@ -238,7 +236,7 @@ def optional_path(filename: str, dir: str) -> Optional[Path]:
     return p if p.exists() and p.is_file() else None
 
 
-def path_glob(pattern: str, dir: str) -> Seq[Path]:
+def path_glob(pattern: str, dir: Path) -> list[Path]:
     """
     Expand the specified glob pattern in directory <dir>, returning a sequence
     of Path objects (which might be empty). The <dir> argument is second to
@@ -262,20 +260,23 @@ def sh(command: str, logger: logging.Logger) -> None:
         raise OSError(f'Command aborted by signal {-rc}')
 
 
-def find_in_path(command: str) -> Optional[str]:
+def find_in_path(command: str) -> Optional[Path]:
     """
-    Find a command in the path, or bail.
-
-    :param command:  the command to find
-    :return: the location. Throws an exception otherwise.
+    Find a command in the path, if possible.
     """
-    path = [p for p in os.getenv('PATH', '').split(os.pathsep) if len(p) > 0]
+    path = [
+        Path(p) for p in os.getenv('PATH', '').split(os.pathsep) if len(p) > 0
+    ]
+    found = None
     for d in path:
-        p = os.path.join(d, command)
-        if os.path.isfile(p) and os.access(p, os.X_OK):
-            return p
-    else:
-        return None
+        if not d.exists():
+            continue
+        p = Path(d, command)
+        if p.is_file() and os.access(p, os.X_OK):
+            found = p
+            break
+
+    return found
 
 
 @contextmanager
@@ -299,15 +300,16 @@ def ensure_dir(directory: Path,
                 shutil.rmtree(str(directory))
 
 
-def combine_metadata(tempdir: str, sources: SourcePaths) -> Path:
+def combine_metadata(tempdir: Path, sources: SourcePaths) -> Path:
     """
     Create the combined metadata YAML file and return its path.
     """
 
     # Load the primary metadata file, as we need to pull some things from it.
     metadata: Dict[str, str] = {}
-    with open(sources.metadata, encoding="utf-8") as f:
-        metadata = yaml.safe_load(f)
+    if sources.metadata is not None:
+        with open(sources.metadata, encoding="utf-8") as f:
+            metadata = yaml.safe_load(f)
 
     combined_metadata_path = Path(tempdir, "metadata.yaml")
     with open(combined_metadata_path, "w", encoding="utf-8") as out:
@@ -403,7 +405,7 @@ def preprocess_markdown(
 
 def find_local_image_references(markdown_files: Seq[Path],
                                 bookdir: Path,
-                                logger: logging.Logger) -> Seq[Path]:
+                                logger: logging.Logger) -> list[Path]:
     """
     Parse image references from the book's Markdown files, so they can
     be copied.
@@ -538,7 +540,7 @@ def pandoc_options(build_data: BuildData, output_type: OutputType) -> str:
             return f"{common} -t json"
 
 
-def locate_pandoc(logger: logging.Logger) -> str:
+def locate_pandoc(logger: logging.Logger) -> Path:
     """
     Locate pandoc in the path, and check the version. The first found
     pandoc executable is used.
@@ -546,7 +548,7 @@ def locate_pandoc(logger: logging.Logger) -> str:
     import subprocess
     pandoc = find_in_path("pandoc")
     if pandoc is None:
-        raise FileNotFoundError("Cannot location pandoc executable.")
+        raise FileNotFoundError("Cannot locate pandoc executable.")
 
     with subprocess.Popen((f"{pandoc}", "--version"),
                           stdout=subprocess.PIPE,
@@ -681,7 +683,7 @@ def fix_epub(epub: Path,
             if type(child) == minidom.Text:
                 element.removeChild(child)
 
-    def get_text_children(element: minidom.Element) -> str:
+    def get_text_children(element: minidom.Element) -> Optional[str]:
         text = None
         if element:
             s = ''
@@ -689,9 +691,10 @@ def fix_epub(epub: Path,
                 if child and (type(child) == minidom.Text):
                     s += child.data.strip()
             text = s if s else None
+
         return text
 
-    def fix_toc_ncx(toc: Path):
+    def fix_toc_ncx(toc: Path) -> None:
         # Assumes pwd *is* unpack directory
         logger.debug(f'(fix_epub) Reading table of contents file "{toc}".')
         with open(toc, encoding="utf-8") as f:
@@ -772,11 +775,11 @@ def fix_epub(epub: Path,
             with open(toc, mode='w', encoding="utf-8") as f:
                 dom.writexml(f)
 
-    def fix_chapter_files():
+    def fix_chapter_files() -> None:
         logger.debug('(fix_epub) Fixing titles in chapter files...')
         title_pat = re.compile(r'^(.*<title>).*(</title>).*$')
 
-        def fix_chapter_file(path, title):
+        def fix_chapter_file(path: Path, title: str) -> None:
             with open(path, encoding="utf-8") as f:
                 lines = [l.rstrip() for l in f.readlines()]
             with open(path, mode="w", encoding="utf-8") as f:
@@ -786,8 +789,8 @@ def fix_epub(epub: Path,
                         line = f'{m.group(1)}{title}{m.group(2)}'
                     f.write(f'{line}\n')
 
-        for file in glob('EPUB/text/ch*.xhtml'):
-            fix_chapter_file(file, title=book_title)
+        for file in glob("EPUB/text/ch*.xhtml"):
+            fix_chapter_file(Path(file), title=book_title)
 
     # Main logic
     try:
@@ -980,8 +983,7 @@ def build_docx(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     book_dir - the directory containing the book's sources
     logger   - the logger
     """
-    build_dir = build_directory(book_dir)
-    with prepare_build(book_dir, build_dir, etc_dir, logger) as build_data:
+    with prepare_build(book_dir, etc_dir, logger) as build_data:
         with preprocess_markdown(build_data=build_data) as files:
             files_str = ' '.join(str(p) for p in files)
             output_path = Path(build_data.build_dir, "book.docx")
@@ -1001,14 +1003,16 @@ def build_epub(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     book_dir - the directory containing the book's sources
     logger   - the logger
     """
-    build_dir = build_directory(book_dir)
-    with prepare_build(book_dir, build_dir, etc_dir, logger) as build_data:
+    with prepare_build(book_dir, etc_dir, logger) as build_data:
         with preprocess_markdown(build_data=build_data) as files:
             files_str = ' '.join(str(p) for p in files)
             output_path = Path(build_data.build_dir, "book.epub")
             logger.info(f'Building "{output_path}"')
             opts = pandoc_options(build_data, OutputType.EPUB)
-            metadata = load_metadata(build_data.source_paths.metadata)
+            if build_data.source_paths.metadata is not None:
+                metadata = load_metadata(build_data.source_paths.metadata)
+            else:
+                metadata = {}
             with chdir(build_data.book_dir):
                 sh(f"{build_data.pandoc} {opts} -o {output_path} {files_str}",
                 logger)
@@ -1026,7 +1030,6 @@ def build_html(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     book_dir - the directory containing the book's sources
     logger   - the logger
     """
-    build_dir = build_directory(book_dir)
     with prepare_build(book_dir, etc_dir, logger) as build_data:
         build_html_or_pdf(build_data, OutputType.HTML, logger)
 
@@ -1150,8 +1153,9 @@ def run_build(etc_dir: str,
 # ---------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    if sys.version_info < (3, 12):
-        print(f"Python 3.12.0 or better is required. You're using "
+    if sys.version_info < MIN_PYTHON_VERSION:
+        s_ver = '.'.join(str(n) for n in MIN_PYTHON_VERSION)
+        print(f"Python {s_ver}.0 or better is required. You're using "
               f"{sys.version}")
         sys.exit(1)
 
