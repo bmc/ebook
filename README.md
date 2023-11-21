@@ -330,6 +330,35 @@ book.
 
 PDF output is generated from HTML via [Weasy Print][].
 
+**Limitations:**
+
+- No table of contents
+
+
+### Generating Microsoft Word
+
+The `customer-reference.docx` file in the `etc/files` directory is used
+to style the document. This reference document is an augmented version of
+the one shipped with Pandoc. You can get the Pandoc reference document by
+running:
+
+```shell
+$ pandoc -o custom-reference.docx --print-default-data-file reference.docx
+```
+
+The one shipped with `ebook` adds support for left-, right- and center-justified
+paragraphs, which you can create with special Markdown markup added by `ebook`.
+
+**Limitations:**
+
+- Paragraphs don't have their first lines indented. You can manually correct
+  this in the document by putting your cursor within a paragraph and selecting
+  **Format > Style** to style all similar paragraphs.
+- Level 1 headings don't start on a new page. You can fix that throughout the
+  entire document by putting your cursor within a level 1 heading and selecting
+  **Format > Style**.
+- The cover image may need to be scaled manually within Word.
+
 ### Images
 
 Image references to files are relative to your book directory. It's best to
