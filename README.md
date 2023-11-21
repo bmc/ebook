@@ -356,6 +356,12 @@ book.
 - author (if present)
 - references (if present)
 
+This ordering is *fixed*. It cannot be changed, either via configuration
+or the command line. As I noted, `ebook` is opinionated. This is its, and
+my, idea of the proper ordering. A future enhancement may permit you to
+define your own ordering (say, via a file in your book's source directory);
+for now, though, that's not an option.
+
 ### Generating PDF
 
 PDF output is generated from HTML via [Weasy Print][].
