@@ -6,7 +6,8 @@ aliquet. Suscipit platea et massa in mattis. Id ac risus. Necessitatibus
 pharetra risus. Cursus dui nunc ut magna quam. Sem ut nec curabitur ut sed. Id
 nec neque ipsum vestibulum vestibulum sodales purus ornare.
 
-[See @WatsonCrick1953]
+(@ex1) For example, there's a long chain of DNA that translates quite nicely
+to Latin. [See @WatsonCrick1953]
 
 {-} Nec aliquam magnam luctus et mi tellus nec<br/>
 lacus duis elit convallis. Sed amet<br/>

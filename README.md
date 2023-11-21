@@ -2,15 +2,28 @@
 
 ## Overview
 
-This repository is a template for a project that'll build an eBook (in
-ePub, PDF, Microsoft Word and HTML form) from Markdown input files.
+This repository contains an opinionated tooling framework that allows you to
+write an eBook (in ePub, PDF, Microsoft Word and HTML form) from Markdown
+input files.
 
 tl;dr: You write your book as a series of Markdown files, adhering to some
-[file naming conventions](#book-source-file-names), and you run the `./build`
-command (see [Building your book](#building-your-book)) to build your book.
+[file naming conventions](#book-source-file-names), and you run the `ebook`
+command (see [Building your book](#building-your-book)) to build your book in
+one or more of the supported formats.
+
+In additional to a simplified convention for laying out your book, `ebook`
+supports extras, such as:
+
+- [Enhanced Markdown](#enhanced-markdown) capabilities like YAML metadata,
+  fenced code blocks, smart quote conversions, enhanced lists, examples,
+  and other features.
+- [Additional non-standard markup](#additional-non-standard-markup) to allow
+  you to center-, left-, or right-justify paragraphs; create a three-bullet
+  paragraph separator easily; and other goodies.
+- Bibliographic references
 
 There are sample files in this repository, so you can build a (completely
-pointless and utterly useless) eBook right away.
+pointless and utterly useless) eBook right away. Those sample files
 
 This tooling has been tested with [Pandoc][] versions 2.0.4 and 2.0.5.
 
@@ -203,6 +216,8 @@ The meaning of the `{<}` is also explained in that section.
 
 ## Markup notes
 
+### Enhanced Markdown
+
 Your book will use Markdown, as interpreted by Pandoc. The following Pandoc
 extensions are enabled. See the
 [Pandoc User's Guide][] for full details.
@@ -229,8 +244,24 @@ extensions are enabled. See the
   <http://pandoc.org/MANUAL.html#extension-fenced_code_attributes> and
   <http://pandoc.org/MANUAL.html#extension-backtick_code_blocks> for details.
 
+- `startnum`, for more control over lists, as outlined in
+  <https://pandoc.org/MANUAL.html#extension-startnum>
 
-### Additional markup
+- `example_lists` for auto-numbered examples that can be referenced
+  from elsewhere in your book.
+
+- `grid_tables` for easy-to-read, nicely-rendered Markdown tables.
+
+- `strikeout`, allowing you to strike a string out (i.e., put a line
+  through it) by surround it with `~` characters (e.g., `~stricken~`)
+
+Additional Pandoc Markdown extensions can be specified on the `ebook`
+command line. Examples of useful extensions you might wish to enable on
+the command line include `superscript`, `subscript`, and
+`shortcut_reference_links`. They, and other Pandoc extensions, are disabled
+by default, to avoid confusion.
+
+### Additional non-standard markup
 
 The build tool uses a [Pandoc filter](https://github.com/jgm/pandocfilters)
 (in `scripts/pandoc-filter.py`) to enrich the Markdown slightly:

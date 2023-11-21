@@ -56,7 +56,7 @@ HASKELL_OPTS = ''
 MIN_PANDOC_VERSION = (3, 1, 0)
 MIN_PYTHON_VERSION = (3, 10)
 
-PANDOC_EXTENSIONS = (
+INVARIANT_PANDOC_EXTENSIONS = (
     "line_blocks",
     "escaped_line_breaks",
     "smart",
@@ -64,9 +64,11 @@ PANDOC_EXTENSIONS = (
     "fenced_code_attributes",
     "backtick_code_blocks",
     "yaml_metadata_block",
+    "startnum",
+    "example_lists",
+    "grid_tables",
+    "strikeout"
 )
-
-INPUT_FORMAT = f"markdown+{'+'.join(PANDOC_EXTENSIONS)}"
 
 # ---------------------------------------------------------------------------
 # Data types and classes
@@ -144,6 +146,7 @@ class BuildData:
     combined_metadata: Path
     image_references: list[Path]
     html_body_include: Path
+    additional_markdown_extensions: list[str]
 
     @property
     def markdown_files(self: Self) -> Seq[Path]:
@@ -500,9 +503,18 @@ def pandoc_options(build_data: BuildData, output_type: OutputType) -> str:
 
     A string of command line options
     """
+    extensions: set[str] = set(INVARIANT_PANDOC_EXTENSIONS)
+    if build_data.additional_markdown_extensions is not None:
+        extensions = extensions.union(
+            set(build_data.additional_markdown_extensions)
+        )
+
+    ext_str = "+".join(extensions)
+    input_format = f"markdown+{ext_str}"
+
     pandoc_filter = Path(build_data.scripts_dir, 'pandoc-filter.py')
     common = (
-        f"-f {INPUT_FORMAT} {HASKELL_OPTS} -F {pandoc_filter} "
+        f"-f {input_format} {HASKELL_OPTS} -F {pandoc_filter} "
         "--standalone --citeproc"
     )
 
@@ -834,6 +846,7 @@ def load_metadata(metadata_file: Path) -> Dict[str, Any]:
 @contextmanager
 def prepare_build(book_dir: Path,
                   etc_dir: Path,
+                  additional_extensions: list[str],
                   logger: logging.Logger) -> Generator[BuildData, None, None]:
     """
     Prepare the build environment, which includes gathering sources, locating
@@ -876,7 +889,8 @@ def prepare_build(book_dir: Path,
             temp_dir=tempdir,
             combined_metadata=combined_metadata,
             image_references=image_references,
-            html_body_include=Path(tempdir, "body_include.html")
+            html_body_include=Path(tempdir, "body_include.html"),
+            additional_markdown_extensions=additional_extensions
         )
         make_html_body_include(bd)
         yield bd
@@ -884,6 +898,7 @@ def prepare_build(book_dir: Path,
 
 def dump_ast(book_dir: Path,
              etc_dir: Path,
+             additional_extensions: list[str],
              logger: logging.Logger) -> None:
     """
     Target: Dumps the JSON AST to the build directory.
@@ -894,7 +909,10 @@ def dump_ast(book_dir: Path,
     etc_dir  - where the support files are located
     logger   - the logger
     """
-    with prepare_build(book_dir, etc_dir, logger) as build_data:
+    with prepare_build(book_dir=book_dir,
+                       etc_dir=etc_dir,
+                       additional_extensions=additional_extensions,
+                       logger=logger) as build_data:
         with preprocess_markdown(build_data) as files:
             opts = pandoc_options(build_data, OutputType.AST)
             files_str = ' '.join(str(p) for p in files)
@@ -911,6 +929,7 @@ def dump_ast(book_dir: Path,
 
 def dump_combined(book_dir: Path,
                   etc_dir: Path,
+                  additional_extensions: list[str],
                   logger: logging.Logger) -> None:
     """
     Target: Dumps the combined single document to the build directory.
@@ -921,7 +940,10 @@ def dump_combined(book_dir: Path,
     etc_dir  - where the support files are located
     logger   - the logger
     """
-    with prepare_build(book_dir, etc_dir, logger) as build_data:
+    with prepare_build(book_dir=book_dir,
+                       etc_dir=etc_dir,
+                       additional_extensions=additional_extensions,
+                       logger=logger) as build_data:
         with preprocess_markdown(build_data) as files:
             output_path = Path(build_data.build_dir, "combined.md")
             logger.debug(f"Writing {output_path}")
@@ -973,7 +995,10 @@ def build_html_or_pdf(build_data: BuildData,
                 shutil.copyfile(img, target)
 
 
-def build_docx(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
+def build_docx(book_dir: Path,
+               etc_dir: Path,
+               additional_extensions: list[str],
+               logger: logging.Logger) -> None:
     """
     Target: Creates the Microsoft Word version of the book
 
@@ -982,7 +1007,10 @@ def build_docx(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     book_dir - the directory containing the book's sources
     logger   - the logger
     """
-    with prepare_build(book_dir, etc_dir, logger) as build_data:
+    with prepare_build(book_dir=book_dir,
+                       etc_dir=etc_dir,
+                       additional_extensions=additional_extensions,
+                       logger=logger) as build_data:
         with preprocess_markdown(build_data=build_data) as files:
             output_path = Path(build_data.build_dir, "book.docx")
             logger.info(f'Building "{output_path}"')
@@ -1004,7 +1032,10 @@ def build_docx(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
                 logger)
 
 
-def build_epub(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
+def build_epub(book_dir: Path,
+               etc_dir: Path,
+               additional_extensions: list[str],
+               logger: logging.Logger) -> None:
     """
     Target: Creates the ePub version of the book
 
@@ -1013,7 +1044,10 @@ def build_epub(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     book_dir - the directory containing the book's sources
     logger   - the logger
     """
-    with prepare_build(book_dir, etc_dir, logger) as build_data:
+    with prepare_build(book_dir=book_dir,
+                       etc_dir=etc_dir,
+                       additional_extensions=additional_extensions,
+                       logger=logger) as build_data:
         with preprocess_markdown(build_data=build_data) as files:
             files_str = ' '.join(str(p) for p in files)
             output_path = Path(build_data.build_dir, "book.epub")
@@ -1031,7 +1065,10 @@ def build_epub(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
                         book_title=metadata.get("title", ""),
                         logger=logger)
 
-def build_html(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
+def build_html(book_dir: Path,
+               etc_dir: Path,
+               additional_extensions: list[str],
+               logger: logging.Logger) -> None:
     """
     Target: Creates the HTML version of the book
 
@@ -1040,11 +1077,17 @@ def build_html(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     book_dir - the directory containing the book's sources
     logger   - the logger
     """
-    with prepare_build(book_dir, etc_dir, logger) as build_data:
+    with prepare_build(book_dir=book_dir,
+                       etc_dir=etc_dir,
+                       additional_extensions=additional_extensions,
+                       logger=logger) as build_data:
         build_html_or_pdf(build_data, OutputType.HTML, logger)
 
 
-def build_pdf(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
+def build_pdf(book_dir: Path,
+              etc_dir: Path,
+              additional_extensions: list[str],
+              logger: logging.Logger) -> None:
     """
     Target: Creates the PDF version of the book
 
@@ -1053,16 +1096,24 @@ def build_pdf(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     book_dir - the directory containing the book's sources
     logger   - the logger
     """
-    build_dir = build_directory(book_dir)
-    with prepare_build(book_dir, etc_dir, logger) as build_data:
+    with prepare_build(book_dir=book_dir,
+                       etc_dir=etc_dir,
+                       additional_extensions=additional_extensions,
+                       logger=logger) as build_data:
         build_html_or_pdf(build_data, OutputType.PDF, logger)
 
 
-def build_all(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
-    build_pdf(book_dir, etc_dir, logger)
-    build_html(book_dir, etc_dir, logger)
-    build_epub(book_dir, etc_dir, logger)
-    build_docx(book_dir, etc_dir, logger)
+def build_all(book_dir: Path,
+              etc_dir: Path,
+              additional_extensions: list[str],
+              logger: logging.Logger) -> None:
+    for func in (build_pdf, build_html, build_epub, build_docx):
+        func(
+            book_dir=book_dir,
+            etc_dir=etc_dir,
+            additional_extensions=additional_extensions,
+            logger=logger
+        )
 
 def clean_output(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     build_dir = build_directory(book_dir)
@@ -1085,6 +1136,9 @@ def clean_output(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
 @click.option("-L", "--log-path", default=None,
               type=click.Path(dir_okay=False, writable=True),
               help="Path to additional file to which to log messages.")
+@click.option("-x", "--extensions", default=None,
+              help="Comma-separated list of additional Pandoc Mardown "
+                   "extensions to be enabled")
 @click.version_option(VERSION, prog_name=NAME)
 @click.argument("book_dir", required=True,
                 type=click.Path(dir_okay=True, file_okay=False,
@@ -1094,6 +1148,7 @@ def run_build(etc_dir: str,
               log_level: str,
               log_path: Optional[str],
               book_dir: str,
+              extensions: Optional[str],
               target: str) -> None:
     """
     Build the ebook. BOOKDIR is the directory containing your book's
@@ -1152,10 +1207,15 @@ def run_build(etc_dir: str,
 
         target_funcs.append(target_func)
 
+    additional_extensions = []
+    if extensions is not None:
+        additional_extensions = [s.strip() for s in extensions.split(",")]
+
     for target_func in target_funcs:
         target_func(
             book_dir=Path(book_dir).absolute(),
             etc_dir=Path(etc_dir).absolute(),
+            additional_extensions=additional_extensions,
             logger=logger
         )
 
