@@ -45,6 +45,7 @@ if tuple(sys.version_info) < (3, 10):
 # ---------------------------------------------------------------------------
 
 VERSION = "2.0.0"
+NAME = "ebook"
 
 LOG_LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
 
@@ -1071,6 +1072,7 @@ def clean_output(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
 @click.option("-L", "--log-path", default=None,
               type=click.Path(dir_okay=False, writable=True),
               help="Path to additional file to which to log messages.")
+@click.version_option(VERSION, prog_name=NAME)
 @click.argument("book_dir", required=True,
                 type=click.Path(dir_okay=True, file_okay=False,
                                 writable=True, exists=True))
