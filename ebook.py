@@ -536,7 +536,6 @@ def pandoc_options(build_data: BuildData, output_type: OutputType) -> str:
             )
 
         case OutputType.AST:
-            ast_out = Path(build_data.build_dir, "ast.json")
             return f"{common} -t json"
 
 
@@ -985,10 +984,21 @@ def build_docx(book_dir: Path, etc_dir: Path, logger: logging.Logger) -> None:
     """
     with prepare_build(book_dir, etc_dir, logger) as build_data:
         with preprocess_markdown(build_data=build_data) as files:
-            files_str = ' '.join(str(p) for p in files)
             output_path = Path(build_data.build_dir, "book.docx")
             logger.info(f'Building "{output_path}"')
             opts = pandoc_options(build_data, OutputType.WORD)
+
+            # Force-include the cover image, if there is one, because
+            # Pandoc won't insert it.
+            if build_data.source_paths.cover_image is not None:
+                cover = make_temp_text_file(
+                    "cover.md",
+                    f"![]({build_data.source_paths.cover_image})",
+                    build_data.temp_dir
+                )
+                files = [cover] + files
+
+            files_str = ' '.join(str(p) for p in files)
             with chdir(build_data.book_dir):
                 sh(f"{build_data.pandoc} {opts} -o {output_path} {files_str}",
                 logger)
@@ -1124,6 +1134,8 @@ def run_build(etc_dir: str,
         "all": build_all,
         "pdf": build_pdf,
         "epub": build_epub,
+        "docx": build_docx,
+        "word": build_docx,
         "html": build_html,
         "combined": dump_combined,
         "ast": dump_ast
