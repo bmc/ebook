@@ -1,4 +1,8 @@
-# ebook-template
+# ebook
+
+**Note**: For the old `ebook-template` code, see the
+[ebook-template](https://github.com/bmc/ebook/tree/ebook-template)
+branch. *FYI: That code is no longer maintained.*
 
 ## Overview
 
