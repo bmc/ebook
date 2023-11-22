@@ -1,0 +1,18 @@
+[tool.black]
+line-length = 79
+target-version = ['py310']
+extend-exclude = '''
+^/venv
+'''
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.pyright]
+venvPath = "venv"
+include = ["./*.py"]
+exclude = ["./tasks.py"]
+
