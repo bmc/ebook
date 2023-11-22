@@ -520,7 +520,7 @@ You can combine targets:
 $ ebook docx pdf
 ```
 
-### What version of `book` am I using?
+### What version of `ebook` am I using?
 
 ```shell
 $ ebook --version
