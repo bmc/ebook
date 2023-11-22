@@ -146,6 +146,10 @@ class SourcePaths:
 
 @dataclass(frozen=True)
 class BuildData:
+    """
+    Contains all consolidated information necessary to build the book.
+    See prepare_build() for details.
+    """
     source_paths: SourcePaths
     book_dir: Path
     build_dir: Path
@@ -170,10 +174,16 @@ class BuildData:
 
 
 class BookError(Exception):
+    """
+    Base class for exceptions thrown by this tool.
+    """
     pass
 
 
 class BookToolError(BookError):
+    """
+    Thrown to indicate tooling errors, such as inability to find Pandoc.
+    """
     pass
 
 
@@ -242,14 +252,20 @@ def file_or_default(path: Path, default: Path) -> Path:
 
     Parameters:
 
-    path:    path to file to test
-    default: default file
+    path    - path to file to test
+    default - default file to use, if <path> doesn't exist
+
+    Returns:
+
+    Whichever one exists
+
+    Raises a BookError on error
     """
     if path.is_file():
         return path
 
     if not default.is_file():
-        raise Exception(
+        raise BookError(
             f"Default file {default} does not exist or is not a file."
         )
 
@@ -281,7 +297,8 @@ def sh(command: str, logger: logging.Logger) -> None:
 
     Parameters:
 
-    command: the command to run
+    command - the command to run
+    logger  - the logger
     """
     import subprocess
 
@@ -335,6 +352,14 @@ def ensure_dir(
 def combine_metadata(tempdir: Path, sources: SourcePaths) -> Path:
     """
     Create the combined metadata YAML file and return its path.
+
+    Parameters:
+
+    tempdir - the temporary directory, where the combined metadata file will
+              be written
+    sources - the sources from the book directory
+
+    Returns the combined metadata file
     """
 
     # Load the primary metadata file, as we need to pull some things from it.
@@ -371,6 +396,14 @@ def make_temp_text_file(name: str, contents: str, tempdir: Path) -> Path:
     Write the specified contents (presumably a string with multiple lines)
     to a temporary file in the specified temporary directory, and return the
     path to the file.
+
+    Parameters
+
+    name     - the desired name of the file
+    contents - the text contents to write to the file
+    tempdir  - where the file will be created
+
+    Returns the new, temporary file
     """
     path = Path(tempdir, name)
     with open(path, mode="w", encoding="utf-8") as f:
@@ -513,6 +546,13 @@ def find_image_references(
 def find_sources(book_dir: Path, etc_dir: Path) -> SourcePaths:
     """
     Locate all book sources
+
+    Parameters:
+
+    book_dir - the source directory for the book being built
+    etc_dir  - this tool's installed "etc" directory
+
+    Returns a SourcePaths object describing all the book sources
     """
     from functools import partial
 
@@ -556,9 +596,7 @@ def pandoc_options(build_data: BuildData, output_type: OutputType) -> str:
     build_data  - the build data, used for paths
     output_type - the output type
 
-    Returns:
-
-    A string of command line options
+    Returns a string of command line options
     """
     extensions: set[str] = set(INVARIANT_PANDOC_EXTENSIONS)
     if build_data.additional_markdown_extensions is not None:
@@ -610,6 +648,13 @@ def locate_pandoc(logger: logging.Logger) -> Path:
     """
     Locate pandoc in the path, and check the version. The first found
     pandoc executable is used.
+
+    Returns the path to the pandoc
+
+    Raises:
+
+    FileNotFoundError - cannot find pandoc
+    BookToolError     - unsupported pandoc version
     """
     import subprocess
 
@@ -927,9 +972,8 @@ def prepare_build(
     etc_dir  - where the support files are located
     logger   - the logger
 
-    Yields:
-
-    A BuildData object.
+    Yields a BuildData object with all the information necessary to build
+    the book.
     """
     pandoc = locate_pandoc(logger)
     make_build_dir(build_dir, logger)
@@ -964,6 +1008,16 @@ def prepare_build(
 def copy_images_to_build(
     build_data: BuildData, logger: logging.Logger
 ) -> None:
+    """
+    Copies all images from their source locations into the appropriate
+    place in the build directory. This is necessary primarily for HTML,
+    where images aren't currently inlined.
+
+    Parameters:
+
+    build-data - the build data, from prepare_build()
+    logger     - where to log messages
+    """
     with chdir(build_data.book_dir):
         for img in build_data.image_references:
             if img.is_absolute():
