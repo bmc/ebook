@@ -7,10 +7,10 @@
 ## Overview
 
 This repository contains an opinionated tooling framework that allows you to
-write an eBook (in ePub, PDF, Microsoft Word and HTML form) from [Markdown][]
+write an eBook (in ePub, PDF, Microsoft Word, and HTML formats) from [Markdown][]
 input files.
 
-tl;dr: You write your book as a series of Markdown files, adhering to some
+Basically, you write your book as a series of Markdown files, adhering to some
 [file naming conventions](#book-source-file-names), and you run the `ebook`
 command (see [Building your book](#building-your-book)) to build your book in
 one or more of the supported formats. `ebook` does some magic, and then it uses
