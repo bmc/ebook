@@ -431,6 +431,10 @@ def substitute_any_metadata(elem: Element, doc: Any) -> Element:
         m = matches_pattern(elem, pat)
         if m:
             s = doc.get_metadata(meta_key, "")
+            # Note: For things with multiple possible values, like "author",
+            # Pandoc handles converting the list of elements into something
+            # useful (e.g., Author1, Author2 and Author3). So we don't have
+            # to do anything special.
             return Str(f"{m.group(1)}{s}{m.group(2)}")
 
     return elem
