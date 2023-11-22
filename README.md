@@ -253,7 +253,8 @@ tokens are:
    the [metadata](#fill-in-the-metadata)
 
 In truth, those tokens are supported in _any_ of your Markdown source files,
-though they make the most sense in the `copyright.md` file.
+though they make the most sense in the `copyright.md` file. See
+[Substitution Patterns](#substitution-patterns) for more details.
 
 The `{<}` token in the sample copyright file forces left justification, as
 described in [Additional markup](#additional-markup).
@@ -331,6 +332,19 @@ into an em-dash.
 
 (The filter is written in Python, using the
 [Panflute](http://scorreia.com/software/panflute/) package.)
+
+### Substitution Patterns
+
+`ebook` supports various substitution patterns for substitution metadata
+into your book from the [metadata](#fill-in-the-metadata).
+
+- `%author%` is replaced with the "author" value(s)
+- `%title%` is replaced with the book title
+- `%subtitle%` is replaced with the book subtitle
+- `%copyright-year%` is replaced with the copyright "year" value
+- `%copyright-owner%` is replaced with the copyright "owner" value
+- `%publisher%` is replaced with the "publisher" value
+- `%language%` is replaced with the language string
 
 ## Book source file names
 
