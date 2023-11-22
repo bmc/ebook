@@ -241,9 +241,24 @@ author:
 #### Supply copyright information
 
 Use the `book/copyright.md` file in this repo as an example, and fill in the
-copyright information for your book. You can leave `%` tokens in there; they'll
-be substituted as described, below, in [Additional markup](#additional-markup).
-The meaning of the `{<}` is also explained in that section.
+copyright information for your book. As the sample `copyright.md` file
+demonstrates, you can use special tokens to substitute values directly out of
+the metadata. You're not required to use these tokens, but they can make things
+easier, since you won't have to specify the values in multiple places. The
+tokens are:
+
+- `%copyright-year%` is replaced with the copyright "year" value from
+  the [metadata](#fill-in-the-metadata)
+- `%copyright-owner%` is replaced with the copyright "owner" value from
+   the [metadata](#fill-in-the-metadata)
+
+In truth, those tokens are supported in _any_ of your Markdown source files,
+though they make the most sense in the `copyright.md` file.
+
+The `{<}` token in the sample copyright file forces left justification, as
+described in [Additional markup](#additional-markup).
+
+Note that `copyright.md` is not required, but it is _highly_ recommended.
 
 ## Markup notes
 
@@ -341,14 +356,7 @@ must adhere to the following conventions:
 - All book text files must have the extension `.md`.
 
 - If you create a `copyright.md` file, it'll be placed at the beginning,
-  after the title page. This file supports two special substitution tokens,
-  as the sample `copyright.md` file demonstrates. You're not required to use
-  these tokens, but they can make things easier, since you won't have to
-  specify the values in multiple places. The tokens are:
-    - `%copyright-year%` is replaced with the copyright "year" value from
-      the [metadata](#fill-in-the-metadata)
-    - `%copyright-owner%` is replaced with the copyright "owner" value from
-      the [metadata](#fill-in-the-metadata)
+  after the title page.
 
 - If you create a file called `dedication.md`, it'll be placed right after the
   copyright page in the generated output. See `dedication.md` for an example.
