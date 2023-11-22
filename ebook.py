@@ -164,8 +164,8 @@ class BuildData:
         """
         Return the list of Markdown files to be processed.
         """
-        return (
-            [self.combined_metadata] + list(self.source_paths.markdown_files)
+        return [self.combined_metadata] + list(
+            self.source_paths.markdown_files
         )
 
 
@@ -231,7 +231,7 @@ def configure_logging(
         h.setFormatter(formatter)
         logger.addHandler(h)
 
-    logger.info(f"Logging configured, at log level {s_level}.")
+    logger.debug(f"Logging configured, at log level {s_level}.")
 
     return logger
 
@@ -1384,17 +1384,18 @@ def run_build(
     Valid build targets:
 
     \b
-    clean:    Delete the entire build directory
-    build:    Build all versions of the book (PDF, Epub, HTML, etc.)
-    all:      Same as "build"
-    pdf:      Build just the PDF version of the book
-    html:     Build just the HTML version of the book
-    epub:     Build just the ePub version of the book
-    docx:     Build just the Microsoft Word version of the book
-    ast:      Write the Pandoc AST (as JSON), pretty-printed, to ast.json in
-              the build directory. This target is primarily for debugging.
-    combined: Write the final combined document, as fed to Pandoc, to
-              combined.md in the build directory. Primarily for debugging.
+    clean:           Delete the entire build directory
+    build, all:      Build all versions of the book (PDF, Epub, HTML, etc.)
+    pdf, book.pdf:   Build just the PDF version of the book.
+    html, book.html: Build just the HTML version of the book
+    epub, book.epub: Build just the ePub version of the book
+    docx, word, book.docx:
+                     Build just the Microsoft Word version of the book
+    ast:             Write the Pandoc AST, as pretty-printed JSON, to ast.json
+                     in the build directory. Primarily for debugging.
+    combined:        Write the final combined document, as fed to Pandoc, to
+                     combined.md in the build directory. Primarily for
+                     debugging.
 
     Default: build
     """
@@ -1403,11 +1404,16 @@ def run_build(
         target_map = {
             "clean": clean_output,
             "all": build_all,
+            "build": build_all,
             "pdf": build_pdf,
+            "book.pdf": build_pdf,
             "epub": build_epub,
+            "book.epub": build_epub,
             "docx": build_docx,
+            "book.docx": build_docx,
             "word": build_docx,
             "html": build_html,
+            "book.html": build_html,
             "combined": dump_combined,
             "ast": dump_ast,
         }
