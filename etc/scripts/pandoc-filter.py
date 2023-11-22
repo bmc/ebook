@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # ---------------------------------------------------------------------------
-# Copyright © 2017-2019 Brian M. Clapper
+# Copyright © 2017-2023 Brian M. Clapper
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -27,16 +27,17 @@ https://github.com/jgm/pandoc/wiki/Pandoc-Filters
 
 import sys
 from panflute import *
-import os
+import re
 from itertools import dropwhile, takewhile
-from typing import Pattern, Match, Any, List, Generic, TypeVar, Optional
+from typing import (Pattern, Match, Any, List, Generic, TypeVar, Optional,
+                    Mapping)
 
 # Need the lib module. Make sure it can be found.
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from lib import *
+#sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+#from lib import *
 
-if sys.version_info < (3,6):
-    print("Must use Python 3.6 or better.")
+if sys.version_info < (3,10):
+    print("Must use Python 3.10 or better.")
     sys.exit(1)
 
 # ---------------------------------------------------------------------------
@@ -93,7 +94,6 @@ DOCX_JUSTIFICATION_STYLES = {
 
 T = TypeVar('T')
 
-
 class DataHolder(Generic[T]):
     """
     Allows for assign-and-test. See
@@ -123,6 +123,33 @@ def debug(message: str) -> None:
     message: The message to print
     """
     print(message, file=sys.stderr)
+
+
+def abort(message: str) -> None:
+    """
+    Print a message and exit.
+    """
+    print(message, file=sys.stderr)
+    sys.exit(1)
+
+
+def validate_metadata(dict_like: Mapping[str, Any]) -> None:
+    """
+    Validates metadata that's been loaded into a dictionary-like object.
+    Throws an exception if a required key is missing.
+    """
+    for key in ('title', 'author', 'copyright.owner', 'copyright.year',
+                'publisher', 'language', 'genre'):
+        # Drill through composite keys.
+        keys = key.split('.') if '.' in key else [key]
+        d = dict_like
+        v = None
+        for k in keys:
+            v = d.get(k)
+            d = v if v else {}
+
+        if not v:
+            abort(f'Missing required "{key}" in metadata.')
 
 
 def matches_text(elem: Element,  text: str) -> bool:

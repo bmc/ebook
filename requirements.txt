@@ -1,4 +1,3 @@
-PyYAML>=4.2b1
-grizzled-python>=2.0.0
-doit==0.31.1
-panflute==1.11.2
+panflute==2.3.0
+weasyprint==60.1
+click==8.1.7

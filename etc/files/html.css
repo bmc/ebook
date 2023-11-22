@@ -29,11 +29,6 @@ p {
   margin-right: 1em;
 }
 
-img.plantuml {
-    margin-top: 1em;
-    margin-bottom: 1em;
-}
-
 div.left p {
   margin-top: 1em;
   text-indent: 0;
@@ -63,14 +58,17 @@ h1.title {
   text-align: center;
 }
 
-h1.subtitle {
-  font-style: italic;
+.subtitle {
+  font-size: larger;
+  font-weight: bold;
   text-align: center;
+  font-style: italic;
 }
 
-h2.author {
+.author {
   text-align: center;
   padding-bottom: 2em;
+  padding-top: 2em;
 }
 
 #toc {

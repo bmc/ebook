@@ -1,3 +1,8 @@
+**Version 2.0.0**
+
+Completely reworked to be an installable command, instead of a build tool
+that has to live alongside your book sources.
+
 **Version 0.8.0**
 
 - Now insists on Pandoc version 2.7.

@@ -6,12 +6,18 @@ aliquet. Suscipit platea et massa in mattis. Id ac risus. Necessitatibus
 pharetra risus. Cursus dui nunc ut magna quam. Sem ut nec curabitur ut sed. Id
 nec neque ipsum vestibulum vestibulum sodales purus ornare.
 
-[See @WatsonCrick1953]
+(@ex1) ![](images/dice.png)
 
-Nec aliquam magnam luctus et mi tellus nec lacus duis elit convallis. Sed amet
-a. Metus sed nunc. Ligula per venenatis. Mi etiam sagittis. Mauris in
-scelerisque. Porta non vel ut nunc dictum. Tincidunt id massa. Consectetuer
-dui sodales elit ridiculus euismod. Id nibh mauris magna imperdiet semper
+{-} Nec aliquam magnam luctus et mi tellus nec<br/>
+lacus duis elit convallis. Sed amet<br/>
+a. Metus sed nunc. Ligula per venenatis. Mi<br/>
+etiam sagittis. Mauris in scelerisque. Porta<br/>
+non vel ut nunc dictum.
+<br/>
+
+
+Tincidunt id massa. Consectetuer dui sodales elit ridiculus euismod.
+[See @WatsonCrick1953] Id nibh mauris magna imperdiet semper
 ullamcorper tincidunt consectetuer. Nec dolor amet. Ultricies amet aliqua
 elementum nec accumsan. Eget magna cras non sociosqu gravida. Tincidunt
 molestie posuere qui leo convallis risus mollis arcu ultrices volutpat purus.
@@ -19,27 +25,6 @@ Vel dolor vel ultrices urna ornare amet volutpat lacinia nec suscipit
 pellentesque ac ut a feugiat viverra id sed magnis mauris pellentesque viverra
 mauris. Consequat cras ipsum. Mauris etiam fermentum. Enim consectetuer sem.
 Fusce metus sed. Felis erat adipiscing suscipit fusce sodales.
-
-Here's a short-form PlantUML example:
-
-```plantuml
-@startuml
-client->server: SYN
-server->client: SYN+ACK
-client->server: ACK
-@enduml
-```
-
-Here's a longer-form PlantUML example:
-
-~~~ {.plantuml title="4-way handshake"}
-@startuml
-client->server: FIN
-server->client: ACK
-server->client: FIN
-client->server: ACK
-@enduml
-~~~
 
 Nec augue reprehenderit mattis eu scelerisque aliquam elementum feugiat.
 Aliquam eget malesuada. Suscipit odio risus. Id neque quam neque tortor amet.
