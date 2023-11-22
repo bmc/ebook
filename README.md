@@ -61,18 +61,51 @@ ePub is the format used by Apple's iBooks and various free readers, including
 
 `book.pdf` is a single PDF document, generated from HTML via [Weasy Print][].
 
+**Limitations:**
+
+- There's no table of contents.
+
 ### HTML
 
 `book.html` is a single-page HTML, styled in a pleasant format.
 
-### Microsoft Word
-
-`book.docx` is a Microsoft Word version of your book.
-
-**Issues:**
+**Limitations:**
 
 - There's no table of contents.
-- The cover image is not included in the Word document.
+
+### Microsoft Word
+
+`book.docx` is a Microsoft Word version of your book. The
+`customer-reference.docx` file in the `etc/files` directory is used
+to style the document. This reference document is an augmented version of
+the one shipped with Pandoc. You can get the Pandoc reference document by
+running:
+
+```shell
+$ pandoc -o custom-reference.docx --print-default-data-file reference.docx
+```
+
+The one shipped with `ebook` adds support for left-, right- and center-justified
+paragraphs, which you can create via the
+[additional non-standard markup](#additional-non-standard-markup) added by
+`ebook`.
+
+**Limitations:**
+
+- There's no table of contents. But it's straightforward enough to create
+  your own in the generated Word document. In newer versions of Microsoft
+  Word (e.g., the version you get with Office 365):
+    - Insert a page break to create a new, blank page.
+    - Select "References" from the menu bar.
+    - Select "Table of Contents", and select your desired style.
+
+- Paragraphs don't have their first lines indented. You can manually correct
+  this in the document by putting your cursor within a paragraph and selecting
+  **Format > Style** to style all similar paragraphs.
+- Level 1 headings don't start on a new page. You can fix that throughout the
+  entire document by putting your cursor within a level 1 heading and selecting
+  **Format > Style**.
+- The cover image may need to be scaled manually within Word.
 
 ## Unsupported formats
 
@@ -369,59 +402,11 @@ my, idea of the proper ordering. A future enhancement may permit you to
 define your own ordering (say, via a file in your book's source directory);
 for now, though, that's not an option.
 
-### Generating PDF
-
-PDF output is generated from HTML via [Weasy Print][].
-
-**Limitations:**
-
-- No table of contents
-
-### Generating Microsoft Word
-
-The `customer-reference.docx` file in the `etc/files` directory is used
-to style the document. This reference document is an augmented version of
-the one shipped with Pandoc. You can get the Pandoc reference document by
-running:
-
-```shell
-$ pandoc -o custom-reference.docx --print-default-data-file reference.docx
-```
-
-The one shipped with `ebook` adds support for left-, right- and center-justified
-paragraphs, which you can create with special Markdown markup added by `ebook`.
-
-**Limitations:**
-
-- Paragraphs don't have their first lines indented. You can manually correct
-  this in the document by putting your cursor within a paragraph and selecting
-  **Format > Style** to style all similar paragraphs.
-- Level 1 headings don't start on a new page. You can fix that throughout the
-  entire document by putting your cursor within a level 1 heading and selecting
-  **Format > Style**.
-- The cover image may need to be scaled manually within Word.
-
 ### Images
 
 Image references to files are relative to your book directory. It's best to
 keep all images in the same directory as your book.
 It's best to stick with PNG images.
-
-### Table of contents
-
-- **PDF**: PDF output currently doesn't support a table of contents.
-
-- **ePub**: Pandoc generates the table of contents as part of the ePub package.
-
-- **HTML**: The build tool includes JavaScript that generates a table
-  of contents in the browser.
-
-- **Word**: Pandoc doesn't generate a table of contents for Microsoft Word,
-  because it's trivial to create your own. In newer versions of Microsoft
-  Word (e.g., the version you get with Office 365):
-    - Insert a page break to create a new, blank page.
-    - Select "References" from the menu bar.
-    - Select "Table of Contents", and select your desired style.
 
 ### Bibliographic references
 
