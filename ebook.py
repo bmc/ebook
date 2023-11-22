@@ -41,7 +41,7 @@ import yaml
 # Constants
 # ---------------------------------------------------------------------------
 
-VERSION = "2.0.0"
+VERSION = "1.0.0"
 NAME = "ebook"
 
 LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
