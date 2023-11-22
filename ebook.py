@@ -1379,24 +1379,18 @@ def run_build(
 
     Valid build targets:
 
-    clean: Clean up (remove) all built artifacts from BOOKDIR/build.
-
-    build: Build all versions of the book (PDF, Epub, HTML, etc.) in directory
-    BOOKDIR build
-
-    pdf: Build just the PDF version of the book
-
-    html: Build just the HTML version of the book
-
-    epub: Build just the ePub version of the book
-
-    docx: Build just the Microsoft Word version of the book
-
-    ast: Write the Pandoc AST (as JSON), pretty-printed, to BOOKDIR/ast.json.
-    This target is primarily for debugging this program.
-
+    \b
+    clean:    Delete the entire build directory
+    build:    Build all versions of the book (PDF, Epub, HTML, etc.)
+    all:      Same as "build"
+    pdf:      Build just the PDF version of the book
+    html:     Build just the HTML version of the book
+    epub:     Build just the ePub version of the book
+    docx:     Build just the Microsoft Word version of the book
+    ast:      Write the Pandoc AST (as JSON), pretty-printed, to ast.json in
+              the build directory. This target is primarily for debugging.
     combined: Write the final combined document, as fed to Pandoc, to
-    BOOKDIR/combined.md. Primarily for debugging.
+              combined.md in the build directory. Primarily for debugging.
 
     Default: build
     """
