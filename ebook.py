@@ -164,9 +164,9 @@ class BuildData:
         """
         Return the list of Markdown files to be processed.
         """
-        return list(self.source_paths.markdown_files) + [
-            self.combined_metadata
-        ]
+        return (
+            [self.combined_metadata] + list(self.source_paths.markdown_files)
+        )
 
 
 class BookError(Exception):
@@ -961,80 +961,6 @@ def prepare_build(
         yield bd
 
 
-def dump_ast(
-    book_dir: Path,
-    build_dir: Path,
-    etc_dir: Path,
-    additional_extensions: list[str],
-    logger: logging.Logger,
-) -> None:
-    """
-    Target: Dumps the JSON AST to the build directory.
-
-    Parameters:
-
-    book_dir - the directory containing the book's sources
-    etc_dir  - where the support files are located
-    logger   - the logger
-    """
-    with prepare_build(
-        book_dir=book_dir,
-        build_dir=build_dir,
-        etc_dir=etc_dir,
-        additional_extensions=additional_extensions,
-        logger=logger,
-    ) as build_data:
-        with preprocess_markdown(build_data) as files:
-            opts = pandoc_options(build_data, OutputType.AST)
-            files_str = " ".join(str(p) for p in files)
-            output = Path(build_data.build_dir, "ast.json")
-            temp_output = Path(build_data.temp_dir, "ast.json")
-            sh(
-                f"{build_data.pandoc} {opts} -o {temp_output} {files_str}",
-                logger,
-            )
-            with (
-                open(temp_output, mode="r", encoding="utf-8") as temp,
-                open(output, mode="w", encoding="utf-8") as out,
-            ):
-                import json
-
-                js = json.load(temp)
-                out.write(json.dumps(js, sort_keys=False, indent=2))
-
-
-def dump_combined(
-    book_dir: Path,
-    build_dir: Path,
-    etc_dir: Path,
-    additional_extensions: list[str],
-    logger: logging.Logger,
-) -> None:
-    """
-    Target: Dumps the combined single document to the build directory.
-
-    Parameters:
-
-    book_dir - the directory containing the book's sources
-    etc_dir  - where the support files are located
-    logger   - the logger
-    """
-    with prepare_build(
-        book_dir=book_dir,
-        build_dir=build_dir,
-        etc_dir=etc_dir,
-        additional_extensions=additional_extensions,
-        logger=logger,
-    ) as build_data:
-        with preprocess_markdown(build_data) as files:
-            output_path = Path(build_data.build_dir, "combined.md")
-            logger.debug(f"Writing {output_path}")
-            with open(output_path, mode="w", encoding="utf-8") as out:
-                for file in files:
-                    with open(file, mode="r", encoding="utf-8") as f:
-                        out.write(f.read())
-
-
 def copy_images_to_build(
     build_data: BuildData, logger: logging.Logger
 ) -> None:
@@ -1099,6 +1025,84 @@ def build_html_or_pdf(
     # HTML will want the images, so copy them into the output directory.
     if copy_images:
         copy_images_to_build(build_data, logger)
+
+
+def dump_ast(
+    book_dir: Path,
+    build_dir: Path,
+    etc_dir: Path,
+    additional_extensions: list[str],
+    logger: logging.Logger,
+) -> None:
+    """
+    Target: Dumps the JSON AST to the build directory.
+
+    Parameters:
+
+    book_dir              - the directory containing the book's sources
+    build_dir             - the desired build (output) directory
+    etc_dir               - the directory with the default files and scripts
+    additional_extensions - any additional Pandoc Markdown extensions
+    logger                - the logger to use for messages
+    """
+    with prepare_build(
+        book_dir=book_dir,
+        build_dir=build_dir,
+        etc_dir=etc_dir,
+        additional_extensions=additional_extensions,
+        logger=logger,
+    ) as build_data:
+        with preprocess_markdown(build_data) as files:
+            opts = pandoc_options(build_data, OutputType.AST)
+            files_str = " ".join(str(p) for p in files)
+            output = Path(build_data.build_dir, "ast.json")
+            temp_output = Path(build_data.temp_dir, "ast.json")
+            sh(
+                f"{build_data.pandoc} {opts} -o {temp_output} {files_str}",
+                logger,
+            )
+            with (
+                open(temp_output, mode="r", encoding="utf-8") as temp,
+                open(output, mode="w", encoding="utf-8") as out,
+            ):
+                import json
+
+                js = json.load(temp)
+                out.write(json.dumps(js, sort_keys=False, indent=2))
+
+
+def dump_combined(
+    book_dir: Path,
+    build_dir: Path,
+    etc_dir: Path,
+    additional_extensions: list[str],
+    logger: logging.Logger,
+) -> None:
+    """
+    Target: Dumps the combined single document to the build directory.
+
+    Parameters:
+
+    book_dir              - the directory containing the book's sources
+    build_dir             - the desired build (output) directory
+    etc_dir               - the directory with the default files and scripts
+    additional_extensions - any additional Pandoc Markdown extensions
+    logger                - the logger to use for messages
+    """
+    with prepare_build(
+        book_dir=book_dir,
+        build_dir=build_dir,
+        etc_dir=etc_dir,
+        additional_extensions=additional_extensions,
+        logger=logger,
+    ) as build_data:
+        with preprocess_markdown(build_data) as files:
+            output_path = Path(build_data.build_dir, "combined.md")
+            logger.debug(f"Writing {output_path}")
+            with open(output_path, mode="w", encoding="utf-8") as out:
+                for file in files:
+                    with open(file, mode="r", encoding="utf-8") as f:
+                        out.write(f.read())
 
 
 def build_docx(
