@@ -6,8 +6,7 @@ aliquet. Suscipit platea et massa in mattis. Id ac risus. Necessitatibus
 pharetra risus. Cursus dui nunc ut magna quam. Sem ut nec curabitur ut sed. Id
 nec neque ipsum vestibulum vestibulum sodales purus ornare.
 
-(@ex1) For example, there's a long chain of DNA that translates quite nicely
-to Latin. [See @WatsonCrick1953]
+(@ex1) ![](images/dice.png)
 
 {-} Nec aliquam magnam luctus et mi tellus nec<br/>
 lacus duis elit convallis. Sed amet<br/>
@@ -16,8 +15,9 @@ etiam sagittis. Mauris in scelerisque. Porta<br/>
 non vel ut nunc dictum.
 <br/>
 
-Tincidunt id massa. Consectetuer
-dui sodales elit ridiculus euismod. Id nibh mauris magna imperdiet semper
+
+Tincidunt id massa. Consectetuer dui sodales elit ridiculus euismod.
+[See @WatsonCrick1953] Id nibh mauris magna imperdiet semper
 ullamcorper tincidunt consectetuer. Nec dolor amet. Ultricies amet aliqua
 elementum nec accumsan. Eget magna cras non sociosqu gravida. Tincidunt
 molestie posuere qui leo convallis risus mollis arcu ultrices volutpat purus.

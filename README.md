@@ -22,8 +22,10 @@ supports extras, such as:
   paragraph separator easily; and other goodies.
 - Bibliographic references
 
-There are sample files in this repository, so you can build a (completely
-pointless and utterly useless) eBook right away. Those sample files
+There are sample files in this repository, in the `book` subdirectory,
+so you can build a (completely pointless and utterly useless) eBook right
+away. You can also use those sample files as templates for starting your
+own book.
 
 This tooling has been tested with [Pandoc][] versions 2.0.4 and 2.0.5.
 
@@ -289,8 +291,19 @@ into an em-dash.
 ## Book source file names
 
 `ebook` expects your book's Markdown sources to be in a single directory
-with no subdirectories; that includes any images. (You specify this directory
-on the command line, as described later.)
+with no subdirectories (the _book directory_). Images may be in the book
+directory or in any subdirectories below the book directory.
+
+You specify the book directory on the command line, as described later.
+
+### Images
+
+Use _relative_ paths for images, not absolute paths. Absolute paths will wreak
+havoc on your HTML output, among other things, so they are explicitly
+unsupported. `ebook` will abort if you use absolute image references. Also,
+currently, URL image references are unsupported.
+
+### Opinionated file names
 
 `ebook` is opinionated about what you call your Markdown files. Each book
 section (chapters, acknowledgements, etc.) is in its own file, and each file
@@ -479,6 +492,17 @@ or
 $ ebook /path/to/your/book/directory all
 ```
 
+### Building the sample book
+
+If you want to build the sample book, just to see how things look, it's simple
+enough. Assuming you've set `EBOOK_ETC_DIR` in your environment, as recommended,
+run the following command from the top of this repo:
+
+```shell
+$ ebook book
+```
+
+The built artifacts will end up in `book/build`.
 
 ### Other useful targets
 
@@ -508,6 +532,10 @@ To clean up the built targets:
 ```shell
 $ ebook /path/to/your/book/directory clean
 ```
+
+### Command-line help
+
+Run `ebook` with `--help` to get complete help on the tool.
 
 ## Copyright and License
 

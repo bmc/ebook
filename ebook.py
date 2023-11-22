@@ -155,6 +155,12 @@ class BuildData:
         """
         return list(self.source_paths.markdown_files) + [self.combined_metadata]
 
+class BookError(Exception):
+    pass
+
+class BookToolError(BookError):
+    pass
+
 # ---------------------------------------------------------------------------
 # Functions
 # ---------------------------------------------------------------------------
@@ -409,9 +415,9 @@ def preprocess_markdown(
         yield generated
 
 
-def find_local_image_references(markdown_files: Seq[Path],
-                                bookdir: Path,
-                                logger: logging.Logger) -> list[Path]:
+def find_image_references(markdown_files: Seq[Path],
+                          bookdir: Path,
+                          logger: logging.Logger) -> list[Path]:
     """
     Parse image references from the book's Markdown files, so they can
     be copied.
@@ -421,39 +427,55 @@ def find_local_image_references(markdown_files: Seq[Path],
     markdown_files - the files to parse, looking for image references
     bookdir        - the book directory where the images presumably reside
     logger         - the logger
+
+    Raises an exception if an absolute path or URL is found.
     """
     from urllib.parse import urlparse
-    image_pat = re.compile(r'^\s*!\[.*\]\(([^\)]+)\).*$')
+    image_pat = re.compile(r'\s*!\[.*\]\(([^\)]+)\).*')
 
+    abort = False
     images = []
     for path in markdown_files:
         with open(path, mode='r', encoding="utf-8") as md:
             logger.debug(f'Looking at "{path}"')
             for i, line in enumerate(md.readlines()):
                 lno = i + 1
-                if (m := image_pat.match(line)) is None:
+                if (m := image_pat.search(line)) is None:
                     continue
                 image_ref = m.group(1)
                 logger.debug(f"Found possible image on line {lno}: {image_ref}")
                 p = urlparse(image_ref)
                 if (p.scheme is not None) and (p.scheme.strip() != ""):
                     # Not a local image.
-                    logger.debug(f"Non-local image. Scheme={p.scheme}")
+                    logger.error(
+                        f'Image "{image_ref}" is a URL, which is unsupported.'
+                    )
+                    abort = True
                     continue
 
                 image = Path(image_ref)
-                if str(image.parent) in ("", "."):
-                    logger.debug(f'No directory. Assuming "{bookdir}".')
-                    image = Path(bookdir, image_ref)
-
-                if not image.exists():
-                    logger.warning(
-                        f'File "{path}" refers to nonexistent image '
-                        f'"{image}".'
+                if image.is_absolute():
+                    image_full_path = image
+                    logger.error(
+                        f'Image "{image_ref}" is an absolute path, which is '
+                        "unsupported."
                     )
+                    abort = True
                     continue
 
-                images.append(image.absolute())
+                image_full_path = Path(bookdir, image_ref)
+                if not image_full_path.exists():
+                    logger.error(
+                        f'File "{path}" refers to nonexistent image '
+                        f'"{image_full_path}".'
+                    )
+                    abort = True
+                    continue
+
+                images.append(image)
+
+    if abort:
+        raise BookError("One or more images are in error.")
 
     return images
 
@@ -577,13 +599,13 @@ def locate_pandoc(logger: logging.Logger) -> Path:
             break
 
     if (version is None) or (len(version) < 2):
-        raise VersionError('Unable to determine pandoc version.')
+        raise BookToolError('Unable to determine pandoc version.')
 
     version = tuple(int(v) for v in version)
     if version[0:3] < MIN_PANDOC_VERSION:
         version_str = '.'.join(str(i) for i in version)
         min_version_str = '.'.join(str(i) for i in MIN_PANDOC_VERSION)
-        raise VersionError(
+        raise BookToolError(
             f"Pandoc version is {version_str}. Version {min_version_str} or "
              "newer is required."
         )
@@ -882,7 +904,7 @@ def prepare_build(book_dir: Path,
         combined_metadata = combine_metadata(
             tempdir=tempdir, sources=sources
         )
-        image_references = find_local_image_references(
+        image_references = find_image_references(
             markdown_files=sources.markdown_files,
             bookdir=book_dir,
             logger=logger
@@ -962,6 +984,32 @@ def dump_combined(book_dir: Path,
                         out.write(f.read())
 
 
+def copy_images_to_build(build_data: BuildData,
+                         logger: logging.Logger) -> None:
+    with chdir(build_data.book_dir):
+        for img in build_data.image_references:
+            if img.is_absolute():
+                # Do nothing.
+                continue
+
+            parent = img.parent
+            if str(parent) == ".":
+                # Copy straight into build directory.
+                target = Path(build_data.build_dir, img.name)
+
+            else:
+                # Relative copy.
+                target_parent = Path(build_data.build_dir, parent)
+                logger.debug(f"mkdir -p {target_parent}")
+                target_parent.mkdir(parents=True, exist_ok=True)
+                target = Path(build_data.build_dir, img)
+
+            img_abs = Path(build_data.book_dir, img)
+            logger.debug(f"Copying: {img_abs} -> {target}")
+            shutil.copy(img_abs, target)
+
+
+
 def build_html_or_pdf(build_data: BuildData,
                       output_type: OutputType,
                       logger: logging.Logger) -> None:
@@ -997,12 +1045,7 @@ def build_html_or_pdf(build_data: BuildData,
 
     # HTML will want the images, so copy them into the output directory.
     if copy_images:
-        with chdir(build_data.book_dir):
-            for img in build_data.image_references:
-                target = Path(build_data.build_dir, img.name)
-                logger.debug(f"Copying: {img} -> {target}")
-                shutil.copyfile(img, target)
-
+        copy_images_to_build(build_data,                 logger)
 
 def build_docx(book_dir: Path,
                etc_dir: Path,
@@ -1073,6 +1116,7 @@ def build_epub(book_dir: Path,
                         build_data=build_data,
                         book_title=metadata.get("title", ""),
                         logger=logger)
+
 
 def build_html(book_dir: Path,
                etc_dir: Path,
@@ -1192,42 +1236,44 @@ def run_build(etc_dir: str,
     Default: build
     """
     logger = configure_logging(log_level.upper(), log_path)
+    try:
+        target_map = {
+            "clean": clean_output,
+            "all": build_all,
+            "pdf": build_pdf,
+            "epub": build_epub,
+            "docx": build_docx,
+            "word": build_docx,
+            "html": build_html,
+            "combined": dump_combined,
+            "ast": dump_ast
+        }
 
-    target_map = {
-        "clean": clean_output,
-        "all": build_all,
-        "pdf": build_pdf,
-        "epub": build_epub,
-        "docx": build_docx,
-        "word": build_docx,
-        "html": build_html,
-        "combined": dump_combined,
-        "ast": dump_ast
-    }
+        targets = target if len(target) > 0 else ["all"]
 
-    targets = target if len(target) > 0 else ["all"]
+        # Validate targets first. Don't run anything unless we know all targets are
+        # valid.
+        target_funcs = []
+        for t in targets:
+            if (target_func := target_map.get(t)) is None:
+                raise click.ClickException(f'"{t}" is an unknown target.')
 
-    # Validate targets first. Don't run anything unless we know all targets are
-    # valid.
-    target_funcs = []
-    for t in targets:
-        if (target_func := target_map.get(t)) is None:
-            raise click.ClickException(f'"{t}" is an unknown target.')
+            target_funcs.append(target_func)
 
-        target_funcs.append(target_func)
+        additional_extensions = []
+        if extensions is not None:
+            additional_extensions = [s.strip() for s in extensions.split(",")]
 
-    additional_extensions = []
-    if extensions is not None:
-        additional_extensions = [s.strip() for s in extensions.split(",")]
-
-    for target_func in target_funcs:
-        target_func(
-            book_dir=Path(book_dir).absolute(),
-            etc_dir=Path(etc_dir).absolute(),
-            additional_extensions=additional_extensions,
-            logger=logger
-        )
-
+        for target_func in target_funcs:
+            target_func(
+                book_dir=Path(book_dir).absolute(),
+                etc_dir=Path(etc_dir).absolute(),
+                additional_extensions=additional_extensions,
+                logger=logger
+            )
+    except (BookError, FileNotFoundError) as e:
+        logger.error(f"{e}")
+        raise click.ClickException("--- ABORTED ---")
 
 # ---------------------------------------------------------------------------
 # Main

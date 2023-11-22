@@ -5,7 +5,8 @@ praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias
 excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui
 officia deserunt mollitia animi, id est laborum et dolorum fuga.
 
-See (@ex1)
+See example (@ex1).
+
 
 Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore,
 cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime
