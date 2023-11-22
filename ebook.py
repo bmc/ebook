@@ -382,7 +382,7 @@ def make_temp_text_file(name: str, contents: str, tempdir: Path) -> Path:
 @contextmanager
 def preprocess_markdown(
     build_data: BuildData, divs: bool = False
-) -> Generator[Seq[Path], None, None]:
+) -> Generator[list[Path], None, None]:
     """
     Content manager that preprocesses the Markdown files, adding some content
     and producing new, individual files. These files should be used to generate
