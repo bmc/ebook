@@ -7,7 +7,7 @@
 ## Overview
 
 This repository contains an opinionated tooling framework that allows you to
-write an eBook (in ePub, PDF, Microsoft Word and HTML form) from Markdown
+write an eBook (in ePub, PDF, Microsoft Word and HTML form) from [Markdown][]
 input files.
 
 tl;dr: You write your book as a series of Markdown files, adhering to some
@@ -549,4 +549,4 @@ uses. See the [LICENSE](LICENSE.md) for further details.
 [Pandoc User's Guide]: http://pandoc.org/MANUAL.html
 [Calibre]: https://www.calibre-ebook.com/
 [Weasy Print]: http://weasyprint.org
-
+[Markdown]: https://commonmark.org/help/
