@@ -223,7 +223,8 @@ author:
 ```
 
 - `copyright` (**Required**): A block with two required fields, `owner` and
-  `year`. See the existing sample `metadata.yaml` for an example.
+  `year`. See the existing sample `metadata.yaml` for an example. These
+  values are substituted into the `copyright.md` file, if it is present.
 
 - `publisher` (**Required**): The publisher of the book.
 
@@ -339,6 +340,16 @@ must adhere to the following conventions:
 
 - All book text files must have the extension `.md`.
 
+- If you create a `copyright.md` file, it'll be placed at the beginning,
+  after the title page. This file supports two special substitution tokens,
+  as the sample `copyright.md` file demonstrates. You're not required to use
+  these tokens, but they can make things easier, since you won't have to
+  specify the values in multiple places. The tokens are:
+    - `%copyright-year%` is replaced with the copyright "year" value from
+      the [metadata](#fill-in-the-metadata)
+    - `%copyright-owner%` is replaced with the copyright "owner" value from
+      the [metadata](#fill-in-the-metadata)
+
 - If you create a file called `dedication.md`, it'll be placed right after the
   copyright page in the generated output. See `dedication.md` for an example.
   If you don't want a dedication, simply delete the provided `dedication.md`.
@@ -359,7 +370,7 @@ must adhere to the following conventions:
   chapters. If you have more than 100 chapters (_seriously?_), just add
   another leading zero (e.g., `chapter-001.md`). If you _must_ put the entire
   content in one file, the file's name must start with `chapter-` and end in
-  `.md`.
+  `.md` (e.g., `chapter-all-of-them.md`, or even `chapter-s.md`).
 
 - If the book has an epilogue, put it in file `epilogue.md`. It'll follow the
   last chapter.
@@ -385,6 +396,7 @@ book.
 ### Summary of chapter/section ordering
 
 - title page
+- copyright (if present)
 - dedication (if present)
 - foreward (if present)
 - preface (if present)
