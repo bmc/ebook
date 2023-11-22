@@ -145,8 +145,8 @@ def install() -> None:
     print('-' * 70)
     print(f"Installation complete.")
     print(f"\nYou can run ebook from {executable}.")
-    print("\nHINT: Consider setting EBOOK_ETC_DIR in your shell startup:")
-    print(f'\nexport EBOOK_ETC_DIR="{etc_dir}"')
+    print("\nHINT: Consider setting EBOOK_ETC in your shell startup:")
+    print(f'\nexport EBOOK_ETC="{etc_dir}"')
 
 if __name__ == "__main__":
     try:

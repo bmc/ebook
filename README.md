@@ -158,7 +158,7 @@ You can also simply set an environment variable (preferably in your shell's
 startup file):
 
 ```shell
-export EBOOK_ETC_DIR=$HOME/etc/ebook
+export EBOOK_ETC=$HOME/etc/ebook
 ```
 
 You don't have to be _in_ the repo directory to run the `install.py` program.
@@ -396,6 +396,13 @@ must adhere to the following conventions:
 - If you need a references (bibliography) section, create `references.yaml`,
   as described below. See the provided sample `references.yaml` as an example.
 
+All other files in the book directory are ignored. One exception is images:
+Images that are referenced in the Markdown are included in the result, though there is currently a limitation: With HTML, only images with inline references
+(e.g., `![](path/to/image)`) will work. Other image references won't.
+
+Thus, you can safely include a `README.md` in your book directory, without
+having it show up in your book.
+
 **NOTE**: There's currently no support for generating an index.
 
 Use the sample book in this repo as an example or a template for your own
@@ -440,14 +447,13 @@ You'll need to create the bibliography YAML file,
 
 See also the [citations section][] in the Pandoc User's Guide.
 
-**NOTE**: The presence of a `book/references.yaml` file triggers the build
-tooling to include a **References** chapter at the very end of the document,
-to which `pandoc` will add any cited works. Your bibliography
-(`book/references.yaml`) can contain as many references as you want; only the
-ones you actually cite in your text will show up in the References section.
-If your text contains no citations, the References section will be empty. The
-build tooling does _not_ check first to see whether you actually have any
-citations in your text.
+**NOTE**: The presence of a `book/references.yaml` file triggers the `ebook`
+to include a **References** chapter at the very end of the document, to which
+`pandoc` will add any cited works. Your bibliography (`book/references.yaml`)
+can contain as many references as you want; only the ones you actually cite in
+your text will show up in the References section. If your text contains no
+citations, the References section will be empty. `ebook` does _not_ check
+to see whether you actually have any citations in your text.
 
 An example of a citation is:
 
@@ -460,22 +466,22 @@ full details.
 
 ## Styling your book
 
-Note that `$EBOOK_ETC_DIR` refers to the installed `ebook` `etc` directory,
+Note that `$EBOOK_ETC` refers to the installed `ebook` `etc` directory,
 as described above.
 
-- ePub styling uses `$EBOOK_ETC_DIR/files/epub.css`
-- HTML styling uses `$EBOOK_ETC_DIR/files/html.css`
-- PDF styling uses `$EBOOK_ETC_DIR/files/html-pdf.css`
+- ePub styling uses `$EBOOK_ETC/files/epub.css`
+- HTML styling uses `$EBOOK_ETC/files/html.css`
+- PDF styling uses `$EBOOK_ETC/files/html-pdf.css`
 
 You can change the styling by providing your own version of those files
 in the your book's source directory. That is:
 
 - If `book/html.css` exists, it will be used instead of
-  `$EBOOK_ETC_DIR/files/html.css`.
+  `$EBOOK_ETC/files/html.css`.
 - If `book/epub.css` exists, it will be used instead of
-  `$EBOOK_ETC_DIR/files/epub.css`.
+  `$EBOOK_ETC/files/epub.css`.
 - If `book/html-pdf.css` exists, it will be used instead of
-  `$EBOOK_ETC_DIR/files/epub.css`.
+  `$EBOOK_ETC/files/epub.css`.
 
 ## Building your book
 
@@ -495,14 +501,14 @@ $ ebook /path/to/your/book/directory all
 ### Building the sample book
 
 If you want to build the sample book, just to see how things look, it's simple
-enough. Assuming you've set `EBOOK_ETC_DIR` in your environment, as recommended,
+enough. Assuming you've set `EBOOK_ETC` in your environment, as recommended,
 run the following command from the top of this repo:
 
 ```shell
 $ ebook book
 ```
 
-The built artifacts will end up in `book/build`.
+The built artifacts will end up in `book/build`, by default.
 
 ### Other useful targets
 
@@ -517,7 +523,7 @@ targets:
 You can combine targets:
 
 ```shell
-$ ebook docx pdf
+$ ebook /path/to/your/book/directory docx pdf
 ```
 
 ### What version of `ebook` am I using?

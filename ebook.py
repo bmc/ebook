@@ -645,13 +645,6 @@ def locate_pandoc(logger: logging.Logger) -> Path:
     return pandoc
 
 
-def build_directory(book_dir: Path) -> Path:
-    """
-    Given the book directory, locate the build directory.
-    """
-    return Path(book_dir, "build")
-
-
 def make_build_dir(build_dir: Path, logger: logging.Logger) -> None:
     """
     Create the build directory, if it doesn't exists.
@@ -915,6 +908,7 @@ def load_metadata(metadata_file: Path) -> Dict[str, Any]:
 @contextmanager
 def prepare_build(
     book_dir: Path,
+    build_dir: Path,
     etc_dir: Path,
     additional_extensions: list[str],
     logger: logging.Logger,
@@ -938,7 +932,6 @@ def prepare_build(
     A BuildData object.
     """
     pandoc = locate_pandoc(logger)
-    build_dir = build_directory(book_dir)
     make_build_dir(build_dir, logger)
     with TemporaryDirectory(prefix="ebook") as tempdir_name:
         tempdir = Path(tempdir_name)
@@ -970,6 +963,7 @@ def prepare_build(
 
 def dump_ast(
     book_dir: Path,
+    build_dir: Path,
     etc_dir: Path,
     additional_extensions: list[str],
     logger: logging.Logger,
@@ -985,6 +979,7 @@ def dump_ast(
     """
     with prepare_build(
         book_dir=book_dir,
+        build_dir=build_dir,
         etc_dir=etc_dir,
         additional_extensions=additional_extensions,
         logger=logger,
@@ -1010,6 +1005,7 @@ def dump_ast(
 
 def dump_combined(
     book_dir: Path,
+    build_dir: Path,
     etc_dir: Path,
     additional_extensions: list[str],
     logger: logging.Logger,
@@ -1025,6 +1021,7 @@ def dump_combined(
     """
     with prepare_build(
         book_dir=book_dir,
+        build_dir=build_dir,
         etc_dir=etc_dir,
         additional_extensions=additional_extensions,
         logger=logger,
@@ -1106,6 +1103,7 @@ def build_html_or_pdf(
 
 def build_docx(
     book_dir: Path,
+    build_dir: Path,
     etc_dir: Path,
     additional_extensions: list[str],
     logger: logging.Logger,
@@ -1115,11 +1113,15 @@ def build_docx(
 
     Parameters:
 
-    book_dir - the directory containing the book's sources
-    logger   - the logger
+    book_dir              - the directory containing the book's sources
+    build_dir             - the desired build (output) directory
+    etc_dir               - the directory with the default files and scripts
+    additional_extensions - any additional Pandoc Markdown extensions
+    logger                - the logger to use for messages
     """
     with prepare_build(
         book_dir=book_dir,
+        build_dir=build_dir,
         etc_dir=etc_dir,
         additional_extensions=additional_extensions,
         logger=logger,
@@ -1149,6 +1151,7 @@ def build_docx(
 
 def build_epub(
     book_dir: Path,
+    build_dir: Path,
     etc_dir: Path,
     additional_extensions: list[str],
     logger: logging.Logger,
@@ -1158,11 +1161,15 @@ def build_epub(
 
     Parameters:
 
-    book_dir - the directory containing the book's sources
-    logger   - the logger
+    book_dir              - the directory containing the book's sources
+    build_dir             - the desired build (output) directory
+    etc_dir               - the directory with the default files and scripts
+    additional_extensions - any additional Pandoc Markdown extensions
+    logger                - the logger to use for messages
     """
     with prepare_build(
         book_dir=book_dir,
+        build_dir=build_dir,
         etc_dir=etc_dir,
         additional_extensions=additional_extensions,
         logger=logger,
@@ -1191,6 +1198,7 @@ def build_epub(
 
 def build_html(
     book_dir: Path,
+    build_dir: Path,
     etc_dir: Path,
     additional_extensions: list[str],
     logger: logging.Logger,
@@ -1200,11 +1208,15 @@ def build_html(
 
     Parameters:
 
-    book_dir - the directory containing the book's sources
-    logger   - the logger
+    book_dir              - the directory containing the book's sources
+    build_dir             - the desired build (output) directory
+    etc_dir               - the directory with the default files and scripts
+    additional_extensions - any additional Pandoc Markdown extensions
+    logger                - the logger to use for messages
     """
     with prepare_build(
         book_dir=book_dir,
+        build_dir=build_dir,
         etc_dir=etc_dir,
         additional_extensions=additional_extensions,
         logger=logger,
@@ -1214,6 +1226,7 @@ def build_html(
 
 def build_pdf(
     book_dir: Path,
+    build_dir: Path,
     etc_dir: Path,
     additional_extensions: list[str],
     logger: logging.Logger,
@@ -1223,11 +1236,15 @@ def build_pdf(
 
     Parameters:
 
-    book_dir - the directory containing the book's sources
-    logger   - the logger
+    book_dir              - the directory containing the book's sources
+    build_dir             - the desired build (output) directory
+    etc_dir               - the directory with the default files and scripts
+    additional_extensions - any additional Pandoc Markdown extensions
+    logger                - the logger to use for messages
     """
     with prepare_build(
         book_dir=book_dir,
+        build_dir=build_dir,
         etc_dir=etc_dir,
         additional_extensions=additional_extensions,
         logger=logger,
@@ -1237,13 +1254,26 @@ def build_pdf(
 
 def build_all(
     book_dir: Path,
+    build_dir: Path,
     etc_dir: Path,
     additional_extensions: list[str],
     logger: logging.Logger,
 ) -> None:
+    """
+    Build all versions of the book.
+
+    Parameters:
+
+    book_dir              - the directory containing the book's sources
+    build_dir             - the desired build (output) directory
+    etc_dir               - the directory with the default files and scripts
+    additional_extensions - any additional Pandoc Markdown extensions
+    logger                - the logger to use for messages
+    """
     for func in (build_pdf, build_html, build_epub, build_docx):
         func(
             book_dir=book_dir,
+            build_dir=build_dir,
             etc_dir=etc_dir,
             additional_extensions=additional_extensions,
             logger=logger,
@@ -1251,9 +1281,28 @@ def build_all(
 
 
 def clean_output(
-    book_dir: Path, etc_dir: Path, logger: logging.Logger
+    book_dir: Path,
+    build_dir: Path,
+    etc_dir: Path,
+    additional_extensions: list[str],
+    logger: logging.Logger,
 ) -> None:
-    build_dir = build_directory(book_dir)
+    """
+    Clean the build directory. Note: This function takes all the parameters
+    the build functions do, despite not using them all, to adhere to a uniform
+    function-calling protocol (which makes the main program simpler).
+
+    Parameters:
+
+    book_dir              - the directory containing the book's sources
+                            (not used)
+    build_dir             - the desired build (output) directory
+    etc_dir               - the directory with the default files and scripts
+                            (not used)
+    additional_extensions - any additional Pandoc Markdown extensions (not
+                            used)
+    logger                - the logger to use for messages
+    """
     if build_dir.exists():
         logger.debug(f'Removing "{build_dir}" and its contents.')
         shutil.rmtree(build_dir)
@@ -1261,15 +1310,23 @@ def clean_output(
 
 @click.command("build")
 @click.option(
+    "-b",
+    "--build-dir",
+    default=None,
+    type=click.Path(dir_okay=True, file_okay=False),
+    help="The directory to which to write the built book files. Defaults to "
+    "BOOK_DIR/build",
+)
+@click.option(
     "-e",
     "--etc-dir",
     default=None,
-    envvar="EBOOK_ETC_DIR",
+    envvar="EBOOK_ETC",
     required=True,
     type=click.Path(dir_okay=True, file_okay=False, exists=True),
     help="Path to directory containing ebook's default templates, "
     "scripts, and other files. If not specified, the value "
-    "of the EBOOK_ETC_DIR environment variable is used.",
+    "of the EBOOK_ETC environment variable is used.",
 )
 @click.option(
     "-l",
@@ -1303,6 +1360,7 @@ def clean_output(
 )
 @click.argument("target", required=False, nargs=-1)
 def run_build(
+    build_dir: Optional[str],
     etc_dir: str,
     log_level: str,
     log_path: Optional[str],
@@ -1371,9 +1429,16 @@ def run_build(
         if extensions is not None:
             additional_extensions = [s.strip() for s in extensions.split(",")]
 
+        book_dir_path = Path(book_dir).absolute()
+        if build_dir is None:
+            build_dir_path = Path(book_dir_path, "build")
+        else:
+            build_dir_path = Path(build_dir)
+
         for target_func in target_funcs:
             target_func(
-                book_dir=Path(book_dir).absolute(),
+                book_dir=book_dir_path,
+                build_dir=build_dir_path,
                 etc_dir=Path(etc_dir).absolute(),
                 additional_extensions=additional_extensions,
                 logger=logger,
