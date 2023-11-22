@@ -539,7 +539,7 @@ def find_sources(book_dir: Path, etc_dir: Path) -> SourcePaths:
         appendices=expand("appendix-*.md"),
         acknowledgements=opt("acknowledgements.md"),
         cover_image=opt("cover.png"),
-        chapters=expand("chapter-*.md"),
+        chapters=sorted(expand("chapter-*.md")),
         references_yaml=opt("references.yaml"),
         html_css=local_or_default("html.css"),
         html_pdf_css=local_or_default("html-pdf.css"),
