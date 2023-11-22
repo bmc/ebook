@@ -1,4 +1,6 @@
-# ebook-template
+# ebook
+
+**Formerly:** `ebook-template`
 
 **Warning**: This tooling is deprecated. I'm working on a similar tool
 that is separately installed and doesn't need to be colocated with your
