@@ -36,6 +36,16 @@ This tooling has been tested with [Pandoc][] versions 3.1.7.
 
 If you're impatient, jump to [Getting Started](#getting-started).
 
+## Warnings
+
+This code is a work in progress. It generally does what it's supposed to do,
+though I haven't finished building out a Docker version yet. (What's in the
+`docker` folder is old, from the previous version of this code. It doesn't
+work; it's only there so I can use it as a reference.)
+
+Warnings aside, I am actively using this tooling to work on an eBook, which
+is driving ongoing fixes and enhancements.
+
 ## What's where
 
 - Your book's Markdown sources, cover image, and some metadata go in the
