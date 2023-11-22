@@ -9,9 +9,10 @@ input files.
 tl;dr: You write your book as a series of Markdown files, adhering to some
 [file naming conventions](#book-source-file-names), and you run the `ebook`
 command (see [Building your book](#building-your-book)) to build your book in
-one or more of the supported formats.
+one or more of the supported formats. `ebook` does some magic, and then it uses
+[Pandoc][] to generate your book.
 
-In additional to a simplified convention for laying out your book, `ebook`
+In addition to a simplified convention for laying out your book, `ebook`
 supports extras, such as:
 
 - [Enhanced Markdown](#enhanced-markdown) capabilities like YAML metadata,
@@ -27,7 +28,7 @@ so you can build a (completely pointless and utterly useless) eBook right
 away. You can also use those sample files as templates for starting your
 own book.
 
-This tooling has been tested with [Pandoc][] versions 2.0.4 and 2.0.5.
+This tooling has been tested with [Pandoc][] versions 3.1.7.
 
 If you're impatient, jump to [Getting Started](#getting-started).
 
