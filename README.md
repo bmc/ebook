@@ -46,29 +46,6 @@ work; it's only there so I can use it as a reference.)
 Warnings aside, I am actively using this tooling to work on an eBook, which
 is driving ongoing fixes and enhancements.
 
-## What's where
-
-- Your book's Markdown sources, cover image, and some metadata go in the
-  `book` subdirectory. This is where you'll be doing your editing.
-
-- The `files` subdirectory contains files used by the build. For instance, the
-  HTML and ePub style sheets are there, as are LaTeX templates (used for PDF
-  output) and a Microsoft Word style reference document. You shouldn't need to
-  touch anything in `files`.
-
-- The `scripts` subdirectory currently just contains a Pandoc filter used to
-  provide [enhanced markup](#additional-markup). You shouldn't need to touch
-  anything in `scripts`.
-
-- The `lib` directory contains some additional Python code used by the build.
-  Ignore it.
-
-- Your book output files (`book.docx`, `book.epub`, `book.pdf` and
-  `book.html`) are generated in the topmost directory.
-
-- The build will also generate a subdirectory called `tmp` to hold some
-  temporary files. Git is configured to ignore that directory.
-
 ## Supported output formats
 
 `ebook` will generate your book in the following formats:
@@ -114,12 +91,12 @@ options for generating Kindle content:
 
 ### Using Docker
 
-*TBD*
+A Docker image of this tool chain, with all appropriate dependencies,
+is in the works. Stay tuned.
 
 ### Required software
 
-If you're not using Docker, you'll need to install a few tools on your
-local machine.
+You'll need to install a few tools on your local machine.
 
 1. Install [pandoc](http://pandoc.org/installing.html).
 2. Install a Python distribution, version 3.10 or better.
@@ -133,8 +110,8 @@ Once you have your Python 3 environment set up (and activated, if you're
 using a virtual environment), check out this repository and run the
 `install.py` command. It will install an executable version of `ebook`
 in `$HOME/bin`, and it will install its support files in `$HOME/etc/ebook`.
-It will also attempt to install all necessary packages in the activated
-Python environment.
+It will also attempt to install all necessary packages (except for Pandoc) in
+the activated Python environment.
 
 Note that you'll have to tell `ebook` where to find its `etc` directory.
 You can either specify it on the command line, like so:
@@ -178,7 +155,9 @@ have no desire to make my life more miserable by supporting it on Windows.
 
 In your `book` directory, create a cover image, as a PNG. If you haven't
 settled on a cover image yet, you can use the dummy image that's already
-there. **Currently, the cover image is not optional.**
+there. The cover image is optional, but you really want one, especially if
+you're generating an ePub. You can use the `book/cover.png` file as a
+placeholder, until you settle on your own image.
 
 #### Fill in the metadata
 
@@ -195,8 +174,8 @@ The following elements require your consideration:
 
 - `subtitle` (**Optional**): Subtitle, if any.
 
-- `author` (**Required**): A YAML list of authors. If there is only one author, use a
-  single-element YAML list. For example:
+- `author` (**Required**): A YAML list of authors. If there is only one author,
+  use a single-element YAML list. For example:
 
 ```yaml
 author:
@@ -324,7 +303,7 @@ currently, URL image references are unsupported.
 section (chapters, acknowledgements, etc.) is in its own file, and each file
 must adhere to the following conventions:
 
-- All files must have the extension `.md`.
+- All book text files must have the extension `.md`.
 
 - If you create a file called `dedication.md`, it'll be placed right after the
   copyright page in the generated output. See `dedication.md` for an example.
@@ -562,7 +541,6 @@ uses. See the [LICENSE](LICENSE.md) for further details.
 [citations section]: http://pandoc.org/MANUAL.html#extension-citations
 [Pandoc]: http://pandoc.org
 [Pandoc User's Guide]: http://pandoc.org/MANUAL.html
-[doit]: http://pydoit.org/
 [Calibre]: https://www.calibre-ebook.com/
 [Weasy Print]: http://weasyprint.org
 
