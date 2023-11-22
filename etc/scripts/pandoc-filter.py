@@ -394,15 +394,17 @@ def section_sep(elem: Element, format: str) -> Element:
     if (format == "html") or is_epub(format):
         return RawBlock(f'<div class="sep">{sep}</div>')
     elif format == "latex":
-        tokens = [
-            RawInline(r"\bigskip", format),
-            RawInline(r"\begin{center}", format),
-        ]
-        +[Str(sep)]
-        +[
-            RawInline(r"\end{center}", format),
-            RawInline(r"\bigskip", format),
-        ]
+        tokens = (
+            [
+                RawInline(r"\bigskip", format),
+                RawInline(r"\begin{center}", format),
+            ]
+            + [Str(sep)]
+            + [
+                RawInline(r"\end{center}", format),
+                RawInline(r"\bigskip", format),
+            ]
+        )
         return Para(*tokens)
     elif format == "docx":
         return center_paragraph(Para(Str(sep)), format)
