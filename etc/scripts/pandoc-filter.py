@@ -40,6 +40,9 @@ from typing import (
     TypeVar,
 )
 
+# Note: panflute is oddly typed, in a way that can confuse pyright (and,
+# presumably, other type checkers), even though the code runs fine. There are
+# occasional "type: ignore" annotations in this code to keep pyright happy.
 from panflute import (
     Div,
     Doc,
@@ -198,7 +201,7 @@ def matches_text(elem: Element, text: str) -> bool:
     return isinstance(elem, Str) and elem.text == text
 
 
-def matches_pattern(elem: Element, regex: Pattern) -> Match:
+def matches_pattern(elem: Element, regex: Pattern) -> Match | None:
     """
     Convenience function to see if an element is a Str element and matches
     the specified regular expression.
@@ -453,7 +456,7 @@ def newpage(format: str) -> List[Element]:
         return []
 
 
-def prepare(doc: Doc):
+def prepare(doc: Doc) -> None:
     """
     Filter initialization.
 
@@ -462,7 +465,7 @@ def prepare(doc: Doc):
     doc: the Document object
     """
     # Validate the metadata
-    validate_metadata(doc.get_metadata())
+    validate_metadata(doc.get_metadata()) # type: ignore
 
 
 def transform(elem: Element, doc: Doc) -> Element:
@@ -506,17 +509,19 @@ def transform(elem: Element, doc: Doc) -> Element:
         return section_sep(elem, doc.format)
 
     elif data.set(matches_pattern(elem, AUTHOR_PAT)):
-        authors = doc.get_metadata("author", [])
-        m = data.get()
-        author_str = ""
-        for i, a in enumerate(authors):
-            sep = ", " if i < (len(authors) - 1) else " and "
-            if i > 0:
-                author_str = f"{author_str}{sep}{a}"
-            else:
-                author_str = a
+        authors = doc.get_metadata("author", []) # type: ignore
+        if (m := data.get()) is None:
+            return elem
+        else:
+            author_str = ""
+            for i, a in enumerate(authors):
+                sep = ", " if i < (len(authors) - 1) else " and "
+                if i > 0:
+                    author_str = f"{author_str}{sep}{a}"
+                else:
+                    author_str = a
 
-        return Str(f"{m.group(1)}{author_str}{m.group(2)}")
+            return Str(f"{m.group(1)}{author_str}{m.group(2)}")
 
     elif isinstance(elem, Str):
         return substitute_any_metadata(elem, doc)
