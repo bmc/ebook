@@ -72,6 +72,8 @@ ePub is the format used by Apple's iBooks and various free readers, including
 **Limitations:**
 
 - There's no table of contents.
+- There's no real notion of a "page" in HTML, so level 1 headings don't
+  start on new pages.
 
 ### Microsoft Word
 
@@ -98,7 +100,6 @@ paragraphs, which you can create via the
     - Insert a page break to create a new, blank page.
     - Select "References" from the menu bar.
     - Select "Table of Contents", and select your desired style.
-
 - Paragraphs don't have their first lines indented. You can manually correct
   this in the document by putting your cursor within a paragraph and selecting
   **Format > Style** to style all similar paragraphs.
